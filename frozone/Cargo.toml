@@ -1,0 +1,15 @@
+[package]
+name = "frozone"
+version = "0.1.0"
+edition = "2024"
+
+[features]
+default = ["std"]
+std = ["alloc"]
+alloc = []
+
+[dependencies]
+frozone-derive = {path = "../frozone-derive"}
+
+[dev-dependencies]
+static_assertions = "1.1.0"

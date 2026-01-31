@@ -1,0 +1,97 @@
+#![allow(unused)]
+use frozone::Freezable;
+
+#[macro_use]
+extern crate static_assertions;
+
+#[test]
+fn u64() {
+    assert_eq!(u64::freeze(), 4711862451334276647);
+    assert_eq!(std::primitive::u64::freeze(), 4711862451334276647);
+}
+
+// #[test]
+// fn const_eval() {
+//     static_assertions::const_assert_eq!(u64::freeze(), 4711862451334276647);
+// }
+
+#[test]
+fn derive() {
+    #[derive(Freezable)]
+    struct MyType {
+        field_a: u64,
+        field_b: u32,
+        field_c: u64,
+        field_d: core::ffi::c_int,
+        field_e: MySubType,
+    }
+
+    #[derive(Freezable)]
+    struct MySubType {
+        field_a: u64,
+    }
+
+    let mytype_freeze = MyType::freeze();
+    assert_eq!(mytype_freeze, 12298013273002774775);
+
+    {
+        // check the freeze doesn't just operate on the name
+        #[derive(Freezable)]
+        struct MyType {
+            field_a: u32,
+        }
+        assert_ne!(MyType::freeze(), mytype_freeze);
+    }
+}
+
+#[test]
+fn derive_container() {
+    #[derive(Freezable)]
+    struct MyType {
+        field_c: Vec<u64>,
+        field_a: [u32; 67],
+        field_e: Box<MySubType>,
+    }
+
+    #[derive(Freezable)]
+    struct MySubType {
+        field_a: u64,
+    }
+
+    assert_eq!(MyType::freeze(), 9154997003827669995);
+}
+#[test]
+fn derive_generic() {
+    #[derive(Freezable)]
+    struct MyType<T: frozone::Freezable> {
+        field_c: T,
+        field_d: Box<T>,
+    }
+
+    assert_eq!(MyType::<u64>::freeze(), 4878374019114025642);
+
+    #[derive(Freezable)]
+    struct MyType2<'a> {
+        field_a: &'a [u64],
+    }
+    assert_eq!(MyType2::freeze(), 14635643794014186131);
+}
+
+#[test]
+fn derive_ptr() {
+    #[derive(Freezable)]
+    struct MyType {
+        field_c: *const u8,
+    }
+    assert_eq!(MyType::freeze(), 12713665718889934710);
+}
+// #[test]
+// fn derive_enum() {
+//     #[derive(Freezable)]
+//     enum MyType {
+//         Unit,
+//         Unnamed(u64),
+//         // Unnamed2(u64, u32, u64),
+//     }
+//     assert_eq!(MyType::freeze(), 12713665718889934710);
+// }

@@ -1,0 +1,17 @@
+[package]
+name = "frozone-derive"
+version = "0.1.0"
+edition = "2024"
+authors = ["Michael Bleuez <michael.bleuez2@gmail.com>"]
+description = "Freeze structs and enums, recursively"
+rust-version = "1.85"
+
+[lib]
+proc-macro = true
+
+[dependencies]
+proc-macro2 = { workspace = true, features = ["proc-macro"] }
+quote = { workspace = true, features = ["proc-macro"] }
+syn = { workspace = true, features = ["full", "clone-impls", "derive", "parsing", "printing", "proc-macro"] }
+
+prettyplease = "0.2.37"
