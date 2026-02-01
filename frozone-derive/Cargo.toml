@@ -3,8 +3,11 @@ name = "frozone-derive"
 version = "0.1.0"
 edition = "2024"
 authors = ["Michael Bleuez <michael.bleuez2@gmail.com>"]
-description = "Freeze structs and enums, recursively"
+description = "proc-macro for frozone"
 rust-version = "1.85"
+readme = "README.md"
+license = "MIT"
+repository = "https://github.com/michaelb/frozone"
 
 [lib]
 proc-macro = true

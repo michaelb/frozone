@@ -1,10 +1,7 @@
-// #![no_std]
+#![no_std]
 extern crate proc_macro2;
 use proc_macro::TokenStream;
 use quote::quote;
-
-#[cfg(test)]
-use std::string::{String, ToString};
 
 #[proc_macro_derive(Freezable)]
 pub fn derive_freezable(input: TokenStream) -> TokenStream {
@@ -21,8 +18,8 @@ pub fn derive_freezable(input: TokenStream) -> TokenStream {
 
 fn derive_freezable_enum(
     data: syn::DataEnum,
-    name: &syn::Ident,
-    generics: (
+    _name: &syn::Ident,
+    _generics: (
         syn::ImplGenerics,
         syn::TypeGenerics,
         Option<&syn::WhereClause>,
@@ -48,10 +45,11 @@ fn derive_freezable_enum(
             })
         }
     });
+    let _ = variants_names_and_freezes;
 
-    for v in variants_names_and_freezes {
-        print!("variants => {}", pretty_print(&v));
-    }
+    // for v in variants_names_and_freezes {
+    //     print!("variants => {}", pretty_print(&v));
+    // }
     quote! { 1}.into()
     // let (impl_generics, type_generics, where_clause) = generics;
     // let generated = quote! {
@@ -114,20 +112,5 @@ fn derive_freezable_struct(
         }
     };
 
-    let g: proc_macro2::TokenStream = generated.into();
-    // #[cfg(test)]
-    // {
-    // print!("AST => {}", pretty_print(&g));
-    g.into()
-    // }
-    // #[cfg(not(test))]
-    // g
-}
-
-fn pretty_print(ts: &proc_macro2::TokenStream) -> String {
-    let file = match syn::parse_file(&ts.to_string()) {
-        Ok(f) => f,
-        Err(e) => return format!("error parsing tokenstream: {e:?}"),
-    };
-    prettyplease::unparse(&file)
+    generated.into()
 }

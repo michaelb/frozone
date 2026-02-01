@@ -2,6 +2,12 @@
 name = "frozone"
 version = "0.1.0"
 edition = "2024"
+authors = ["Michael Bleuez <michael.bleuez2@gmail.com>"]
+description = "Freeze structs and enums in time"
+rust-version = "1.85"
+readme = "README.md"
+license = "MIT"
+repository = "https://github.com/michaelb/frozone"
 
 [features]
 default = ["std"]
