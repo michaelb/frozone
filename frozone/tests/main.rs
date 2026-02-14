@@ -146,6 +146,14 @@ fn derive_with_assume_frozen_field() {
 
     assert_eq!(MyType1::freeze(), MyType2::freeze());
     assert_eq!(MyType3::freeze(), MyType2::freeze());
+
+    #[derive(Freezable)]
+    enum MyType4 {
+        A,
+        #[assume_frozen]
+        OtherVariantName(NonFreezable),
+    }
+    assert_ne!(MyType3::freeze(), MyType4::freeze());
 }
 #[test]
 fn derive_with_assume_frozen_variant() {
@@ -209,6 +217,7 @@ fn variant_order() {
 
     assert_eq!(MyType1::freeze(), MyType2::freeze());
 }
+
 #[test]
 fn enum_discriminant() {
     #[derive(Freezable)]
@@ -230,5 +239,20 @@ fn enum_discriminant() {
     }
 
     assert_eq!(MyType1::freeze(), MyType3::freeze());
+    assert_ne!(MyType1::freeze(), MyType2::freeze());
+}
+
+#[test]
+fn enum_variant_inner_type_order() {
+    #[derive(Freezable)]
+    enum MyType1 {
+        A(u8, u32),
+    }
+
+    #[derive(Freezable)]
+    enum MyType2 {
+        A(u32, u8),
+    }
+
     assert_ne!(MyType1::freeze(), MyType2::freeze());
 }

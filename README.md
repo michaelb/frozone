@@ -86,10 +86,34 @@ fn main() {
 }
 ```
 
+## What's frozen and what's not
+
+```rust
+#[derive(Freezable)]
+pub struct StructName {       // visibility qualifier, struct name: NOT FROZEN
+    field_name: FieldType,    // field names, fields types:         FROZEN
+
+    #[assume_frozen]                             // assume_frozen'd field name: FROZEN
+    assumed_frozen_field_name: ExternalFieldType // assume_frozen'd field type: NOT_FROZEN
+}
+// note: the order of the fields is "not frozen"
+
+
+#[derive(Freezable)]
+enum FieldType {  // enum name: NOT FROZEN
+    UnitVariant,  // variant name: FROZEN
+    Variant1 = 1, // discriminant value: FROZEN
+    StructVariant(Type1, Type2, Type3), // inner types (and their order): FROZEN
+
+    #[assume_frozen]  // assume_frozen'd field name: FROZEN
+    AssumedFrozenVariant(Type4, Type5), // inner types: NOT FROZEN
+}
+// note: the order of the variants is "not frozen"
+```
+
 
 ## Roadmap
 
 - [x] structs support
-- [ ] clearly define what's included in the hash (struct name?)
-- [ ] enums support
-- [ ] compile-time check
+- [x] enums support
+- [ ] compile-time check (probably requires const trait = nightly Rust)
