@@ -32,9 +32,19 @@ fn derive_freezable_enum(
                 (stringify!(#name), 0)
             }
         } else {
-            if f.discriminant.is_some() {
-                panic!("enum variants discriminants are not supported yet");
-            }
+            let discriminant = f
+                .discriminant
+                .as_ref()
+                .map(|eq_d| eq_d.1.clone())
+                .map(|d| {
+                    quote! {
+                    use core::hash::Hasher;
+                    let mut hasher = core::hash::SipHasher::new();
+                        (#d).hash(&mut hasher);
+                    hasher.finish()
+                    }
+                })
+                .unwrap_or(quote! {0});
             let variant_fields = f.fields.iter().map(|g| {
                 let g_ty = &g.ty;
                 quote! {
@@ -46,6 +56,7 @@ fn derive_freezable_enum(
                 (stringify!(#name), {
                     let mut hasher = core::hash::SipHasher::new();
 
+                    #discriminant.hash(&mut hasher);
                     [#(#variant_fields,)*].iter().for_each(|x: &u64| {
                         x.hash(&mut hasher);
                     });
