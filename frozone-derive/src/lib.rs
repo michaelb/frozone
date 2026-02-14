@@ -67,12 +67,12 @@ fn derive_freezable_enum(
             fn freeze() -> u64 {
                 use core::hash::{Hash, Hasher};
 
+                [#(#variants_names_and_freezes,)*].iter().fold(0u64, |acc, x| {
                 let mut hasher = core::hash::SipHasher::new();
-                [#(#variants_names_and_freezes,)*].iter().for_each(|x| {
                     x.0.hash(&mut hasher);
                     x.1.hash(&mut hasher);
-                });
-                hasher.finish()
+                    acc.overflowing_add(hasher.finish()).0
+                })
             }
         }
     };

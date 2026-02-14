@@ -94,7 +94,7 @@ fn derive_enum() {
         Unnamed(u64),
         Unnamed2(u64, u32, u64),
     }
-    assert_eq!(MyType::freeze(), 13938101513925945732);
+    assert_eq!(MyType::freeze(), 4633138842164159231);
 }
 
 #[test]
@@ -114,7 +114,7 @@ fn derive_composite() {
         Unnamed(u64),
         MyType2,
     }
-    assert_eq!(MyType::freeze(), 17749802890545832962);
+    assert_eq!(MyType::freeze(), 13542852929500156847);
 }
 
 #[test]
@@ -194,3 +194,34 @@ fn field_order() {
 
     assert_eq!(MyType1::freeze(), MyType2::freeze());
 }
+#[test]
+fn variant_order() {
+    #[derive(Freezable)]
+    enum MyType1 {
+        B(u32),
+        A(u64),
+    }
+    #[derive(Freezable)]
+    enum MyType2 {
+        A(u64),
+        B(u32),
+    }
+
+    assert_eq!(MyType1::freeze(), MyType2::freeze());
+}
+// #[test]
+// fn enum_discriminant() {
+//     #[derive(Freezable)]
+//     enum MyType1 {
+//         A = 1,
+//         B = 4,
+//     }
+//
+//     #[derive(Freezable)]
+//     enum MyType2 {
+//         A = 1,
+//         B = 3,
+//     }
+//
+//     assert_eq!(MyType1::freeze(), MyType2::freeze());
+// }
