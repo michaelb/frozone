@@ -1,6 +1,6 @@
 [package]
 name = "frozone-derive"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2024"
 authors = ["Michael Bleuez <michael.bleuez2@gmail.com>"]
 description = "proc-macro for frozone"

@@ -1,6 +1,6 @@
 [package]
 name = "frozone"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2024"
 authors = ["Michael Bleuez <michael.bleuez2@gmail.com>"]
 description = "Freeze structs and enums in time"
@@ -15,7 +15,7 @@ std = ["alloc"]
 alloc = []
 
 [dependencies]
-frozone-derive = { path = "../frozone-derive", version = "0.1.0" }
+frozone-derive = { path = "../frozone-derive", version = "0.2.0" }
 
 [dev-dependencies]
 static_assertions = "1.1.0"
