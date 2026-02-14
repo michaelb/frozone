@@ -4,5 +4,6 @@
   -frozone-derive
   - frozone
   - frozone's dependency on frozone-derive
-- `git tag -s` (with same version as in the Cargo.toml)
+- `git tag -s v<X.Y.Z>` (with same version as in the Cargo.toml, and same tag message, with _v_ prefix)
 - `git push origin <tag>`
+- from github, review & approve deployment
