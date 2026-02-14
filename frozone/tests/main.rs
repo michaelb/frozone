@@ -96,3 +96,40 @@ fn derive_enum() {
     }
     assert_eq!(MyType::freeze(), 13938101513925945732);
 }
+
+#[test]
+fn derive_composite() {
+    #[derive(Freezable)]
+    struct MyType3 {
+        a: u64,
+    }
+
+    #[derive(Freezable)]
+    enum MyType2 {
+        MyType3,
+    }
+    #[derive(Freezable)]
+    enum MyType {
+        Unit,
+        Unnamed(u64),
+        MyType2,
+    }
+    assert_eq!(MyType::freeze(), 17749802890545832962);
+}
+
+#[test]
+fn derive_with_assume_frozne_field() {
+    #[derive(Freezable)]
+    struct MyType1 {
+        a: u64,
+        #[assume_frozen]
+        b: u32,
+    }
+    #[derive(Freezable)]
+    struct MyType2 {
+        a: u64,
+        #[assume_frozen]
+        b: u64,
+    }
+    assert_eq!(MyType1::freeze(), MyType2::freeze());
+}

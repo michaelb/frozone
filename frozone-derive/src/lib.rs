@@ -3,7 +3,7 @@ extern crate proc_macro2;
 use proc_macro::TokenStream;
 use quote::quote;
 
-#[proc_macro_derive(Freezable)]
+#[proc_macro_derive(Freezable, attributes(assume_frozen))]
 pub fn derive_freezable(input: TokenStream) -> TokenStream {
     let ast: syn::DeriveInput = syn::parse_macro_input!(input);
     let name = &ast.ident;
@@ -94,9 +94,14 @@ fn derive_freezable_struct(
     let fields = data.fields.iter().map(|f| {
         let name = &f.ident;
         let ty = &f.ty;
-        // TODO: handle attrs (such as a future #[assume_frozen] ?)
-        quote! {
-            (stringify!(#name), <#ty as frozone::Freezable>::freeze())
+        if f.attrs.iter().any(|a| a.path().is_ident("assume_frozen")) {
+            quote! {
+                ("_", 0)
+            }
+        } else {
+            quote! {
+                (stringify!(#name), <#ty as frozone::Freezable>::freeze())
+            }
         }
     });
 
