@@ -79,7 +79,7 @@ fn derive_freezable_enum(
                 use core::hash::{Hash, Hasher};
 
                 [#(#variants_names_and_freezes,)*].iter().fold(0u64, |acc, x| {
-                let mut hasher = core::hash::SipHasher::new();
+                    let mut hasher = core::hash::SipHasher::new();
                     x.0.hash(&mut hasher);
                     x.1.hash(&mut hasher);
                     acc.overflowing_add(hasher.finish()).0
@@ -90,7 +90,7 @@ fn derive_freezable_enum(
     let g: proc_macro2::TokenStream = generated.into();
     // #[cfg(test)]
     // {
-    #[cfg(feature = "test")]
+    // #[cfg(feature = "test")]
     // print!("AST => {}", pretty_print(&g));
     g.into()
     // }
