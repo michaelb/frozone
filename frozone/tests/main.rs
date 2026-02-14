@@ -32,7 +32,7 @@ fn derive() {
     }
 
     let mytype_freeze = MyType::freeze();
-    assert_eq!(mytype_freeze, 12298013273002774775);
+    assert_eq!(mytype_freeze, 5861431272991508562);
 
     {
         // check the freeze doesn't just operate on the name
@@ -58,7 +58,7 @@ fn derive_container() {
         field_a: u64,
     }
 
-    assert_eq!(MyType::freeze(), 9154997003827669995);
+    assert_eq!(MyType::freeze(), 4080615902123853835);
 }
 #[test]
 fn derive_generic() {
@@ -68,7 +68,7 @@ fn derive_generic() {
         field_d: Box<T>,
     }
 
-    assert_eq!(MyType::<u64>::freeze(), 4878374019114025642);
+    assert_eq!(MyType::<u64>::freeze(), 11469247882469511076);
 
     #[derive(Freezable)]
     struct MyType2<'a> {
@@ -118,18 +118,79 @@ fn derive_composite() {
 }
 
 #[test]
-fn derive_with_assume_frozne_field() {
+fn derive_with_assume_frozen_field() {
+    #[derive(Freezable)]
+    enum MyType1 {
+        A,
+        #[assume_frozen]
+        B(u32),
+    }
+
+    #[derive(Freezable)]
+    enum MyType2 {
+        A,
+        #[assume_frozen]
+        B(i64),
+    }
+
+    enum NonFreezable {
+        C,
+    }
+
+    #[derive(Freezable)]
+    enum MyType3 {
+        A,
+        #[assume_frozen]
+        B(NonFreezable),
+    }
+
+    assert_eq!(MyType1::freeze(), MyType2::freeze());
+    assert_eq!(MyType3::freeze(), MyType2::freeze());
+}
+#[test]
+fn derive_with_assume_frozen_variant() {
     #[derive(Freezable)]
     struct MyType1 {
         a: u64,
         #[assume_frozen]
         b: u32,
     }
+
     #[derive(Freezable)]
     struct MyType2 {
         a: u64,
         #[assume_frozen]
         b: u64,
     }
+
+    struct NonFreezable {
+        a: i32,
+    }
+
+    #[derive(Freezable)]
+    struct MyType3 {
+        a: u64,
+        #[assume_frozen]
+        b: NonFreezable,
+    }
+
+    assert_eq!(MyType1::freeze(), MyType2::freeze());
+    assert_eq!(MyType3::freeze(), MyType2::freeze());
+}
+
+#[test]
+fn field_order() {
+    #[derive(Freezable)]
+    struct MyType1 {
+        a: u64,
+        b: u64,
+    }
+
+    #[derive(Freezable)]
+    struct MyType2 {
+        b: u64,
+        a: u64,
+    }
+
     assert_eq!(MyType1::freeze(), MyType2::freeze());
 }

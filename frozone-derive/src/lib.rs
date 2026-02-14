@@ -27,26 +27,31 @@ fn derive_freezable_enum(
 ) -> TokenStream {
     let variants_names_and_freezes = data.variants.iter().map(|f| {
         let name = &f.ident;
-        // TODO: handle attrs
-        if f.discriminant.is_some() {
-            panic!("enum variants discriminants are not supported yet");
-        }
-        let variant_fields = f.fields.iter().map(|g| {
-            let g_ty = &g.ty;
+        if f.attrs.iter().any(|a| a.path().is_ident("assume_frozen")) {
             quote! {
-                <#g_ty as frozone::Freezable>::freeze()
+                (stringify!(#name), 0)
             }
-        });
+        } else {
+            if f.discriminant.is_some() {
+                panic!("enum variants discriminants are not supported yet");
+            }
+            let variant_fields = f.fields.iter().map(|g| {
+                let g_ty = &g.ty;
+                quote! {
+                    <#g_ty as frozone::Freezable>::freeze()
+                }
+            });
 
-        quote! {
-            (stringify!(#name), {
-                let mut hasher = core::hash::SipHasher::new();
+            quote! {
+                (stringify!(#name), {
+                    let mut hasher = core::hash::SipHasher::new();
 
-                [#(#variant_fields,)*].iter().for_each(|x: &u64| {
-                    x.hash(&mut hasher);
-                });
-                hasher.finish()
-            })
+                    [#(#variant_fields,)*].iter().for_each(|x: &u64| {
+                        x.hash(&mut hasher);
+                    });
+                    hasher.finish()
+                })
+            }
         }
     });
 
@@ -96,7 +101,7 @@ fn derive_freezable_struct(
         let ty = &f.ty;
         if f.attrs.iter().any(|a| a.path().is_ident("assume_frozen")) {
             quote! {
-                ("_", 0)
+                (stringify!(#name), 0)
             }
         } else {
             quote! {
@@ -111,13 +116,13 @@ fn derive_freezable_struct(
             fn freeze() -> u64 {
                 use core::hash::{Hash, Hasher};
 
-                let mut hasher = core::hash::SipHasher::new();
                 // stringify!( [#(#fields,)*]);
-                [#(#fields,)*].iter().for_each(|x| {
+                [#(#fields,)*].iter().fold(0u64, |acc, x| {
+                    let mut hasher = core::hash::SipHasher::new();
                     x.0.hash(&mut hasher);
                     x.1.hash(&mut hasher);
-                });
-                hasher.finish()
+                    acc.overflowing_add(hasher.finish()).0
+                })
             }
         }
     };
