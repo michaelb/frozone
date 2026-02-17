@@ -256,3 +256,16 @@ fn enum_variant_inner_type_order() {
 
     assert_ne!(MyType1::freeze(), MyType2::freeze());
 }
+
+#[test]
+fn tuple() {
+    #[derive(Freezable)]
+    enum MyType1 {
+        A((u32)),
+        B((u32, u8)),
+        C((u32, u64, (u64, u64, u64, u64))),
+        D((u32, u32, u32, u32, u32, u32, u32, u32, u32, u32, u32, u32)),
+    }
+
+    assert_eq!(MyType1::freeze(), 726139213363783291);
+}

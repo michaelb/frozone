@@ -1,4 +1,4 @@
-#![no_std]
+#![cfg_attr(not(feature = "std"), no_std)]
 mod types;
 
 pub use frozone_derive::Freezable;

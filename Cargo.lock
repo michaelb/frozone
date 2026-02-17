@@ -4,7 +4,7 @@ version = 4
 
 [[package]]
 name = "frozone"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "frozone-derive",
  "static_assertions",
@@ -12,7 +12,7 @@ dependencies = [
 
 [[package]]
 name = "frozone-derive"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "prettyplease",
  "proc-macro2",
