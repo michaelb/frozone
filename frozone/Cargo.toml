@@ -11,12 +11,11 @@ repository = "https://github.com/michaelb/frozone"
 
 [features]
 default = ["std"]
-std = ["alloc"]
+std = ["alloc", "frozone-derive/std"]
 alloc = []
 
 [dependencies]
-frozone-derive = { path = "../frozone-derive", version = "0.2.0" }
+frozone-derive = { path = "../frozone-derive", version = "0.2.0", default-features=false}
 
 [dev-dependencies]
 static_assertions = "1.1.0"
-frozone-derive = { path = "../frozone-derive", features = ["test"] }

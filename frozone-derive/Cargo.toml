@@ -13,12 +13,10 @@ repository = "https://github.com/michaelb/frozone"
 proc-macro = true
 
 [features]
-default = []
-test = ["prettyplease"]
+default = ["std"]
+std = []
 
 [dependencies]
 proc-macro2 = { workspace = true, features = ["proc-macro"] }
 quote = { workspace = true, features = ["proc-macro"] }
 syn = { workspace = true, features = ["full", "clone-impls", "derive", "parsing", "printing", "proc-macro"] }
-
-prettyplease = {version = "0.2.37", optional = true}

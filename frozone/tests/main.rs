@@ -269,3 +269,77 @@ fn tuple() {
 
     assert_eq!(MyType1::freeze(), 726139213363783291);
 }
+
+#[test]
+fn external_generic() {
+    struct External1<T> {
+        a: T,
+    }
+    struct External2<T> {
+        a: T,
+    }
+
+    #[derive(Freezable)]
+    enum MyType1 {
+        A,
+    }
+    #[derive(Freezable)]
+    enum MyType2 {
+        B,
+        C,
+    }
+    assert_ne!(MyType1::freeze(), MyType2::freeze());
+
+    #[derive(Freezable)]
+    struct MyType3 {
+        #[assume_frozen]
+        a: External1<MyType1>,
+    }
+
+    #[derive(Freezable)]
+    struct MyType4 {
+        #[assume_frozen(freeze_generics)]
+        a: External1<MyType2>,
+    }
+
+    #[derive(Freezable)]
+    struct MyType5 {
+        #[assume_frozen(freeze_generics)]
+        a: External2<MyType2>,
+    }
+    #[derive(Freezable)]
+    struct MyType6 {
+        #[assume_frozen(freeze_generics)]
+        a: External2<MyType1>,
+    }
+    assert_ne!(MyType3::freeze(), MyType4::freeze());
+    assert_eq!(MyType5::freeze(), MyType4::freeze());
+    assert_ne!(MyType5::freeze(), MyType6::freeze());
+
+    #[derive(Freezable)]
+    enum MyEnumType3 {
+        #[assume_frozen]
+        A(External1<MyType1>),
+    }
+
+    #[derive(Freezable)]
+    enum MyEnumType4 {
+        #[assume_frozen(freeze_generics)]
+        A(External1<MyType2>),
+    }
+
+    #[derive(Freezable)]
+    enum MyEnumType5 {
+        #[assume_frozen(freeze_generics)]
+        A(External2<MyType2>),
+    }
+    #[derive(Freezable)]
+    enum MyEnumType6 {
+        #[assume_frozen(freeze_generics)]
+        A(External2<MyType1>),
+    }
+
+    assert_ne!(MyEnumType3::freeze(), MyEnumType4::freeze());
+    assert_eq!(MyEnumType5::freeze(), MyEnumType4::freeze());
+    assert_ne!(MyEnumType5::freeze(), MyEnumType6::freeze());
+}
