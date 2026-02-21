@@ -121,3 +121,7 @@ enum FieldType {  // enum name: NOT FROZEN
 - [ ] configurable inclusion of the type names themselves
 - [ ] compile-time check (probably requires const trait = nightly Rust)
 - [ ] better errors
+- [ ] consider #[repr(..)] changes inclusion in hash
+- [ ] consideration for non-exhaustive enums
+- [ ] common crates shims (uuid, url ...)
+- [ ] pub-only fields feature?
