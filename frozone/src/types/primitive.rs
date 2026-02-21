@@ -1,4 +1,4 @@
-use crate::{Freezable, assume_frozen};
+use crate::{Freezable, types::assume_frozen};
 use core::ffi::{CStr, c_void};
 
 assume_frozen!(CStr, c_void);
@@ -26,7 +26,8 @@ impl<T: Freezable, const N: usize> Freezable for [T; N] {
         use core::hash::{Hash, Hasher};
         #[allow(deprecated)]
         let mut h = core::hash::SipHasher::new();
-        core::any::type_name::<[T; N]>().hash(&mut h);
+        "[;N]".hash(&mut h);
+        N.hash(&mut h);
         T::freeze().hash(&mut h);
         h.finish()
     }
@@ -37,7 +38,7 @@ impl<T: Freezable> Freezable for [T] {
         use core::hash::{Hash, Hasher};
         #[allow(deprecated)]
         let mut h = core::hash::SipHasher::new();
-        core::any::type_name::<[T]>().hash(&mut h);
+        "[]".hash(&mut h);
         T::freeze().hash(&mut h);
         h.finish()
     }
@@ -48,30 +49,31 @@ impl<T: Freezable> Freezable for &T {
         use core::hash::{Hash, Hasher};
         #[allow(deprecated)]
         let mut h = core::hash::SipHasher::new();
-        core::any::type_name::<&T>().hash(&mut h);
+        "&".hash(&mut h);
         T::freeze().hash(&mut h);
         h.finish()
     }
 }
 
+// mut and const ptr evaluate to the same freeze hash
 impl<T: Freezable> Freezable for *const T {
     fn freeze() -> u64 {
         use core::hash::{Hash, Hasher};
         #[allow(deprecated)]
         let mut h = core::hash::SipHasher::new();
-        core::any::type_name::<*const T>().hash(&mut h);
+        "*const".hash(&mut h);
         T::freeze().hash(&mut h);
         h.finish()
     }
 }
 
-// mut and const ptr evaluate to the same (*const's) freeze hash
+// mut and const ptr evaluate to the same freeze hash
 impl<T: Freezable> Freezable for *mut T {
     fn freeze() -> u64 {
         use core::hash::{Hash, Hasher};
         #[allow(deprecated)]
         let mut h = core::hash::SipHasher::new();
-        core::any::type_name::<*const T>().hash(&mut h);
+        "*mut".hash(&mut h);
         T::freeze().hash(&mut h);
         h.finish()
     }
@@ -82,7 +84,7 @@ impl<T: Freezable> Freezable for &[T] {
         use core::hash::{Hash, Hasher};
         #[allow(deprecated)]
         let mut h = core::hash::SipHasher::new();
-        core::any::type_name::<&[T]>().hash(&mut h);
+        "&[]".hash(&mut h);
         T::freeze().hash(&mut h);
         h.finish()
     }

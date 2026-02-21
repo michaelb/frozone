@@ -58,7 +58,7 @@ fn derive_container() {
         field_a: u64,
     }
 
-    assert_eq!(MyType::freeze(), 4080615902123853835);
+    assert_eq!(MyType::freeze(), 2592227803823060039);
 }
 #[test]
 fn derive_generic() {
@@ -74,7 +74,7 @@ fn derive_generic() {
     struct MyType2<'a> {
         field_a: &'a [u64],
     }
-    assert_eq!(MyType2::freeze(), 14635643794014186131);
+    assert_eq!(MyType2::freeze(), 2482863297349756199);
 }
 
 #[test]
@@ -83,7 +83,12 @@ fn derive_ptr() {
     struct MyType {
         field_c: *const u8,
     }
-    assert_eq!(MyType::freeze(), 12713665718889934710);
+    #[derive(Freezable)]
+    struct MyType2 {
+        field_c: *mut u8,
+    }
+    assert_eq!(MyType::freeze(), 9315545481621597728);
+    assert_eq!(MyType2::freeze(), 14445949281328555364);
 }
 
 #[test]
@@ -267,7 +272,7 @@ fn tuple() {
         D((u32, u32, u32, u32, u32, u32, u32, u32, u32, u32, u32, u32)),
     }
 
-    assert_eq!(MyType1::freeze(), 726139213363783291);
+    assert_eq!(MyType1::freeze(), 5870148933263435734);
 }
 
 #[test]
@@ -342,4 +347,67 @@ fn external_generic() {
     assert_ne!(MyEnumType3::freeze(), MyEnumType4::freeze());
     assert_eq!(MyEnumType5::freeze(), MyEnumType4::freeze());
     assert_ne!(MyEnumType5::freeze(), MyEnumType6::freeze());
+}
+
+#[test]
+fn struct_names_non_importance() {
+    // names of the structs shouldn't matter to frozone
+    #[derive(Freezable)]
+    enum MyType1 {
+        A(u8, u32),
+    }
+
+    #[derive(Freezable)]
+    enum MyType2 {
+        A(u8, u32),
+    }
+
+    #[derive(Freezable)]
+    struct MyType3 {
+        a: (u8, u32),
+    }
+
+    #[derive(Freezable)]
+    struct MyType4 {
+        a: (u8, u32),
+    }
+
+    assert_eq!(MyType1::freeze(), MyType2::freeze());
+    assert_eq!(MyType3::freeze(), MyType4::freeze());
+
+    #[derive(Freezable)]
+    enum MyType5 {
+        A(u8, MyType1),
+    }
+
+    #[derive(Freezable)]
+    enum MyType6 {
+        A(u8, MyType2),
+    }
+    // works because MyType1 and MyType2 are the same
+    assert_eq!(MyType3::freeze(), MyType4::freeze());
+
+    #[derive(Freezable)]
+    struct MyType7 {
+        a: MyType1,
+    }
+
+    #[derive(Freezable)]
+    struct MyType8 {
+        a: MyType2,
+    }
+    // works because MyType1 and MyType2 are the same
+    assert_eq!(MyType7::freeze(), MyType8::freeze());
+
+    #[derive(Freezable)]
+    struct MyType9 {
+        a: (u8, MyType1),
+    }
+
+    #[derive(Freezable)]
+    struct MyType10 {
+        a: (u8, MyType2),
+    }
+    // works because MyType1 and MyType2 are the same
+    assert_eq!(MyType10::freeze(), MyType9::freeze());
 }

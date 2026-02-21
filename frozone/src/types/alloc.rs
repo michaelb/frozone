@@ -1,4 +1,7 @@
-use crate::{Freezable, assume_frozen, container_derive_impl};
+use crate::{
+    Freezable,
+    types::{assume_frozen, container_derive_impl},
+};
 extern crate alloc;
 
 use alloc::alloc::Layout;
@@ -28,7 +31,7 @@ impl<T: Freezable, E: Freezable> Freezable for BTreeMap<T, E> {
         use core::hash::{Hash, Hasher};
         #[allow(deprecated)]
         let mut h = core::hash::SipHasher::new();
-        core::any::type_name::<BTreeMap<T, E>>().hash(&mut h);
+        "BTreeMap".hash(&mut h);
         T::freeze().hash(&mut h);
         E::freeze().hash(&mut h);
         h.finish()
@@ -39,7 +42,7 @@ impl<T: Freezable + Clone> Freezable for Cow<'_, T> {
         use core::hash::{Hash, Hasher};
         #[allow(deprecated)]
         let mut h = core::hash::SipHasher::new();
-        core::any::type_name::<Cow<'_, T>>().hash(&mut h);
+        "Cow".hash(&mut h);
         T::freeze().hash(&mut h);
         h.finish()
     }

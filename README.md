@@ -118,4 +118,6 @@ enum FieldType {  // enum name: NOT FROZEN
 - [x] enums support
 - [x] core/alloc/std types support
 - [x] assume_frozen attribute for external types (incl. Freezable generics support)
+- [ ] configurable inclusion of the type names themselves
 - [ ] compile-time check (probably requires const trait = nightly Rust)
+- [ ] better errors

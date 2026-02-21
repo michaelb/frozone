@@ -1,4 +1,7 @@
-use crate::{Freezable, assume_frozen, container_derive_impl};
+use crate::{
+    Freezable,
+    types::{assume_frozen, container_derive_impl},
+};
 
 use std::ffi::{OsStr, OsString};
 use std::fs::{DirBuilder, DirEntry, File, FileType, Metadata, OpenOptions, Permissions, ReadDir};

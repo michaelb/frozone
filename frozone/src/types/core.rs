@@ -1,4 +1,7 @@
-use crate::{Freezable, assume_frozen, container_derive_impl, generic_derive_impl_no_inner_bound};
+use crate::{
+    Freezable,
+    types::{assume_frozen, container_derive_impl, generic_derive_impl_no_inner_bound},
+};
 use core::any::TypeId;
 use core::cell::{Cell, LazyCell, OnceCell, Ref, RefCell, RefMut, UnsafeCell};
 use core::cmp::{Ordering, Reverse};
@@ -34,7 +37,7 @@ impl<T: Freezable, E: Freezable> Freezable for Result<T, E> {
         use core::hash::{Hash, Hasher};
         #[allow(deprecated)]
         let mut h = core::hash::SipHasher::new();
-        core::any::type_name::<Result<T, E>>().hash(&mut h);
+        "Result".hash(&mut h); // prevent collisions with other containers types
         T::freeze().hash(&mut h);
         E::freeze().hash(&mut h);
         h.finish()
@@ -77,7 +80,8 @@ impl<T: Freezable> Freezable for (T,) {
         use core::hash::{Hash, Hasher};
         #[allow(deprecated)]
         let mut h = core::hash::SipHasher::new();
-        core::any::type_name::<(T,)>().hash(&mut h);
+        "(,)".hash(&mut h); // prevent collisions with other container types
+        1.hash(&mut h); // add tuple len to hash
         T::freeze().hash(&mut h);
         h.finish()
     }
@@ -87,7 +91,8 @@ impl<T: Freezable, U: Freezable> Freezable for (T, U) {
         use core::hash::{Hash, Hasher};
         #[allow(deprecated)]
         let mut h = core::hash::SipHasher::new();
-        core::any::type_name::<(T, U)>().hash(&mut h);
+        "(,)".hash(&mut h); // prevent collisions with other container types
+        2.hash(&mut h); // add tuple len to hash
         T::freeze().hash(&mut h);
         U::freeze().hash(&mut h);
         h.finish()
@@ -95,21 +100,6 @@ impl<T: Freezable, U: Freezable> Freezable for (T, U) {
 }
 
 #[macro_export]
-macro_rules! tuple_derive_impl {
-    ($t:ty, ) => {
-        impl<T: Freezable> Freezable for $t {
-            fn freeze() -> u64 {
-                use core::hash::{Hash, Hasher};
-                #[allow(deprecated)]
-                let mut h = core::hash::SipHasher::new();
-                core::any::type_name::<$t>().hash(&mut h);
-                T::freeze().hash(&mut h);
-                h.finish()
-            }
-        }
-    };
-}
-
 macro_rules! tuple_derive_impl {
     ($($ty:ident),*) => {
         impl<$($ty),*> Freezable for ($($ty,)*)
@@ -121,7 +111,8 @@ macro_rules! tuple_derive_impl {
                 use core::hash::{Hash, Hasher};
                 #[allow(deprecated)]
                 let mut h = core::hash::SipHasher::new();
-                core::any::type_name::<($($ty,)*)>().hash(&mut h);
+                "(,)".hash(&mut h); // prevent collisions with other container types
+                [($($ty::freeze(),)*)].len().hash(&mut h); // small hack to add tuple len to hash
                 ($($ty::freeze().hash(&mut h),)*);
                 h.finish()
             }
@@ -168,7 +159,7 @@ impl<T: Freezable, E: Freezable> Freezable for Chain<T, E> {
         use core::hash::{Hash, Hasher};
         #[allow(deprecated)]
         let mut h = core::hash::SipHasher::new();
-        core::any::type_name::<Chain<T, E>>().hash(&mut h);
+        "Chain".hash(&mut h);
         T::freeze().hash(&mut h);
         E::freeze().hash(&mut h);
         h.finish()
@@ -180,7 +171,7 @@ impl<T: Freezable, E: Freezable> Freezable for Filter<T, E> {
         use core::hash::{Hash, Hasher};
         #[allow(deprecated)]
         let mut h = core::hash::SipHasher::new();
-        core::any::type_name::<Filter<T, E>>().hash(&mut h);
+        "Filter".hash(&mut h);
         T::freeze().hash(&mut h);
         E::freeze().hash(&mut h);
         h.finish()
@@ -192,7 +183,7 @@ impl<T: Freezable, E: Freezable> Freezable for Inspect<T, E> {
         use core::hash::{Hash, Hasher};
         #[allow(deprecated)]
         let mut h = core::hash::SipHasher::new();
-        core::any::type_name::<Inspect<T, E>>().hash(&mut h);
+        "Inspect".hash(&mut h);
         T::freeze().hash(&mut h);
         E::freeze().hash(&mut h);
         h.finish()
@@ -204,7 +195,7 @@ impl<T: Freezable, E: Freezable> Freezable for Map<T, E> {
         use core::hash::{Hash, Hasher};
         #[allow(deprecated)]
         let mut h = core::hash::SipHasher::new();
-        core::any::type_name::<Map<T, E>>().hash(&mut h);
+        "Map".hash(&mut h);
         T::freeze().hash(&mut h);
         E::freeze().hash(&mut h);
         h.finish()
@@ -216,7 +207,7 @@ impl<T: Freezable, E: Freezable> Freezable for Zip<T, E> {
         use core::hash::{Hash, Hasher};
         #[allow(deprecated)]
         let mut h = core::hash::SipHasher::new();
-        core::any::type_name::<Zip<T, E>>().hash(&mut h);
+        "Zip".hash(&mut h);
         T::freeze().hash(&mut h);
         E::freeze().hash(&mut h);
         h.finish()
