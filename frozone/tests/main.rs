@@ -1,4 +1,5 @@
 #![allow(unused)]
+#![allow(unexpected_cfgs)]
 use frozone::Freezable;
 
 #[macro_use]
@@ -410,4 +411,101 @@ fn struct_names_non_importance() {
     }
     // works because MyType1 and MyType2 are the same
     assert_eq!(MyType10::freeze(), MyType9::freeze());
+}
+
+#[test]
+fn full_type_names() {
+    #[derive(Freezable)]
+    struct MyType1 {
+        a: String,
+    }
+
+    #[derive(Freezable)]
+    struct MyType2 {
+        a: std::string::String,
+    }
+    extern crate alloc;
+    #[derive(Freezable)]
+    struct MyType3 {
+        a: alloc::string::String,
+    }
+    assert_eq!(MyType2::freeze(), MyType1::freeze());
+    assert_eq!(MyType3::freeze(), MyType1::freeze());
+}
+
+#[test]
+fn variants_cfg() {
+    // names of the structs shouldn't matter to frozone
+    #[derive(Freezable)]
+    enum MyType1 {
+        #[cfg(test)]
+        A(u8, u32),
+        #[cfg(not(test))] // configure out a struct member
+        B(u8, u32),
+    }
+    #[derive(Freezable)]
+    enum MyType2 {
+        A(u8, u32),
+    }
+    assert_eq!(MyType1::freeze(), MyType2::freeze());
+
+    #[derive(Freezable)]
+    enum MyType3 {
+        #[cfg(not(inexistent_feature))] // configure out a struct member
+        A(u8, u32),
+        #[cfg(inexistent_feature)]
+        B(u8, u32),
+    }
+    #[derive(Freezable)]
+    enum MyType4 {
+        A(u8, u32),
+    }
+    assert_eq!(MyType3::freeze(), MyType4::freeze());
+}
+
+#[test]
+fn fields_cfg() {
+    // names of the structs shouldn't matter to frozone
+    #[derive(Freezable)]
+    struct MyType1 {
+        a: u8,
+        #[cfg(not(test))] // configure out a struct member
+        b: u8,
+    }
+    #[derive(Freezable)]
+    struct MyType2 {
+        #[cfg(test)]
+        a: u8,
+    }
+    assert_eq!(MyType1::freeze(), MyType2::freeze());
+
+    #[derive(Freezable)]
+    struct MyType3 {
+        a: u8,
+        #[cfg(not(inexistent_feature))] // configure out a struct member
+        b: u8,
+    }
+    #[derive(Freezable)]
+    struct MyType4 {
+        a: u8,
+        b: u8,
+        #[cfg(inexistent_feature)]
+        c: u8,
+    }
+    assert_eq!(MyType3::freeze(), MyType4::freeze());
+
+    #[derive(Freezable)]
+    struct MyType5 {
+        a: u8,
+        #[cfg(not(feature = "inexistent_feature"))] // configure out a struct member
+        b: u8,
+    }
+    #[derive(Freezable)]
+    struct MyType6 {
+        a: u8,
+        b: u8,
+        #[cfg(feature = "inexistent_feature")]
+        c: u8,
+    }
+    assert_eq!(MyType5::freeze(), MyType6::freeze());
 }
