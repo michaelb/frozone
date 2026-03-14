@@ -509,3 +509,19 @@ fn fields_cfg() {
     }
     assert_eq!(MyType5::freeze(), MyType6::freeze());
 }
+
+#[test]
+fn zero_sized_type() {
+    #[derive(Freezable)]
+    struct Empty;
+    assert_eq!(Empty::freeze(), 0);
+    #[derive(Freezable)]
+    struct Empty2 {}
+    assert_eq!(Empty2::freeze(), 0);
+    #[derive(Freezable)]
+    enum Empty3 {}
+    assert_eq!(Empty3::freeze(), 0);
+    // #[derive(Freezable)]
+    // type Empty4;
+    // assert_eq!(Empty4::freeze(), 0);
+}

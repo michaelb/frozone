@@ -1,7 +1,10 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 extern crate proc_macro2;
 use proc_macro::TokenStream;
+use proc_macro2::Span;
 use quote::quote;
+
+use syn::{Error, Result};
 
 #[proc_macro_derive(Freezable, attributes(assume_frozen))]
 pub fn derive_freezable(input: TokenStream) -> TokenStream {
@@ -9,10 +12,17 @@ pub fn derive_freezable(input: TokenStream) -> TokenStream {
     let name = &ast.ident;
     let generics = ast.generics.split_for_impl();
 
-    match ast.data {
+    let res = match ast.data {
         syn::Data::Struct(data) => derive_freezable_struct(data, name, generics),
         syn::Data::Enum(data) => derive_freezable_enum(data, name, generics),
-        _ => unimplemented!(),
+        _ => Err(Error::new(
+            Span::call_site(),
+            "can only derive trait Freezable for struct or enums",
+        )),
+    };
+    match res {
+        Ok(s) => s,
+        Err(e) => e.to_compile_error().into(),
     }
 }
 
@@ -27,7 +37,7 @@ fn derive_freezable_enum(
         syn::TypeGenerics,
         Option<&syn::WhereClause>,
     ),
-) -> TokenStream {
+) -> Result<TokenStream> {
     let variants_names_and_freezes = data.variants.iter().map(|f| {
         let name = &f.ident;
         if let Some(af) = f.attrs.iter().find(|a| a.path().is_ident("assume_frozen")) {
@@ -95,12 +105,12 @@ fn derive_freezable_enum(
     });
 
     let (impl_generics, type_generics, where_clause) = generics;
-    quote! {
+    Ok(quote! {
         impl #impl_generics frozone::Freezable for #name #type_generics #where_clause {
             fn freeze() -> u64 {
                 use core::hash::{Hash, Hasher};
 
-                [#(#variants_names_and_freezes,)*].iter().fold(0u64, |acc, x| {
+                [#(#variants_names_and_freezes,)*].iter().fold(0u64, |acc, x: &(&str, u64)| {
                     let mut hasher = core::hash::SipHasher::new();
                     x.0.hash(&mut hasher);
                     x.1.hash(&mut hasher);
@@ -109,7 +119,7 @@ fn derive_freezable_enum(
             }
         }
     }
-    .into()
+    .into())
 }
 
 /// generate Freezable impl for the struct (that recursively
@@ -122,9 +132,12 @@ fn derive_freezable_struct(
         syn::TypeGenerics,
         Option<&syn::WhereClause>,
     ),
-) -> TokenStream {
+) -> Result<TokenStream> {
     let fields = data.fields.iter().map(|f| {
-        let name = &f.ident.as_ref().unwrap();
+        let name = &f
+            .ident
+            .as_ref()
+            .expect(&std::panic::Location::caller().to_string());
         let ty = &f.ty;
         if let Some(af) = f.attrs.iter().find(|a| a.path().is_ident("assume_frozen")) {
             if attr_helper_freeze_generics(&af) {
@@ -149,7 +162,7 @@ fn derive_freezable_struct(
             fn freeze() -> u64 {
                 use core::hash::{Hash, Hasher};
 
-                [#(#fields,)*].iter().fold(0u64, |acc, x| {
+                [#(#fields,)*].iter().fold(0u64, |acc, x: &(&str, u64) | {
                     let mut hasher = core::hash::SipHasher::new();
                     x.0.hash(&mut hasher);
                     x.1.hash(&mut hasher);
@@ -159,7 +172,7 @@ fn derive_freezable_struct(
         }
     };
 
-    generated.into()
+    Ok(generated.into())
 }
 
 /// generate a quote! that freezes a type but only over its generic
