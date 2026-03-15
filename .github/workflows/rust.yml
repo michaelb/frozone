@@ -21,4 +21,8 @@ jobs:
       run: cargo build --verbose
     - name: Run tests
       run: cargo test --verbose
+    - name: Run tests (no_std, no alloc)
+      run: cargo test --verbose --no-default-features
+    - name: Run tests (no_std, alloc)
+      run: cargo test --verbose --no-default-features --features="alloc"
 

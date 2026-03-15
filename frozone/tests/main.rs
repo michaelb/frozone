@@ -46,6 +46,7 @@ fn derive() {
 }
 
 #[test]
+#[cfg(feature = "alloc")]
 fn derive_container() {
     #[derive(Freezable)]
     struct MyType {
@@ -62,6 +63,7 @@ fn derive_container() {
     assert_eq!(MyType::freeze(), 2592227803823060039);
 }
 #[test]
+#[cfg(feature = "alloc")]
 fn derive_generic() {
     #[derive(Freezable)]
     struct MyType<T: frozone::Freezable> {
@@ -414,6 +416,7 @@ fn struct_names_non_importance() {
 }
 
 #[test]
+#[cfg(feature = "alloc")]
 fn full_type_names() {
     #[derive(Freezable)]
     struct MyType1 {

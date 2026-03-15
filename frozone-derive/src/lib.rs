@@ -1,4 +1,11 @@
 #![cfg_attr(not(feature = "std"), no_std)]
+
+#[cfg(not(feature = "std"))]
+extern crate alloc;
+
+#[cfg(not(feature = "std"))]
+use alloc::string::ToString;
+
 extern crate proc_macro2;
 use proc_macro::TokenStream;
 use proc_macro2::Span;
@@ -137,7 +144,7 @@ fn derive_freezable_struct(
         let name = &f
             .ident
             .as_ref()
-            .expect(&std::panic::Location::caller().to_string());
+            .expect(&core::panic::Location::caller().to_string());
         let ty = &f.ty;
         if let Some(af) = f.attrs.iter().find(|a| a.path().is_ident("assume_frozen")) {
             if attr_helper_freeze_generics(&af) {
