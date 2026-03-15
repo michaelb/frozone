@@ -12,10 +12,6 @@ repository = "https://github.com/michaelb/frozone"
 [lib]
 proc-macro = true
 
-[features]
-default = ["std"]
-std = []
-
 [dependencies]
 proc-macro2 = { workspace = true, features = ["proc-macro"] }
 quote = { workspace = true, features = ["proc-macro"] }
