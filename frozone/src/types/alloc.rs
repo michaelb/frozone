@@ -1,5 +1,5 @@
 use crate::{
-    Freezable,
+    Freezable, FreezeCtx,
     types::{assume_frozen, container_derive_impl},
 };
 extern crate alloc;
@@ -27,7 +27,7 @@ container_derive_impl!(
 );
 
 impl<T: Freezable, E: Freezable> Freezable for BTreeMap<T, E> {
-    fn freeze() -> u64 {
+    fn freeze_with_context(_ctx: &mut FreezeCtx) -> u64 {
         use core::hash::{Hash, Hasher};
         #[allow(deprecated)]
         let mut h = core::hash::SipHasher::new();
@@ -38,7 +38,7 @@ impl<T: Freezable, E: Freezable> Freezable for BTreeMap<T, E> {
     }
 }
 impl<T: Freezable + Clone> Freezable for Cow<'_, T> {
-    fn freeze() -> u64 {
+    fn freeze_with_context(_ctx: &mut FreezeCtx) -> u64 {
         use core::hash::{Hash, Hasher};
         #[allow(deprecated)]
         let mut h = core::hash::SipHasher::new();

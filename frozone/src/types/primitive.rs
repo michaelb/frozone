@@ -1,4 +1,4 @@
-use crate::{Freezable, types::assume_frozen};
+use crate::{Freezable, FreezeCtx, types::assume_frozen};
 use core::ffi::{CStr, c_void};
 
 assume_frozen!(CStr, c_void);
@@ -22,7 +22,7 @@ assume_frozen!(
 );
 
 impl<T: Freezable, const N: usize> Freezable for [T; N] {
-    fn freeze() -> u64 {
+    fn freeze_with_context(_ctx: &mut FreezeCtx) -> u64 {
         use core::hash::{Hash, Hasher};
         #[allow(deprecated)]
         let mut h = core::hash::SipHasher::new();
@@ -34,7 +34,7 @@ impl<T: Freezable, const N: usize> Freezable for [T; N] {
 }
 
 impl<T: Freezable> Freezable for [T] {
-    fn freeze() -> u64 {
+    fn freeze_with_context(_ctx: &mut FreezeCtx) -> u64 {
         use core::hash::{Hash, Hasher};
         #[allow(deprecated)]
         let mut h = core::hash::SipHasher::new();
@@ -45,7 +45,7 @@ impl<T: Freezable> Freezable for [T] {
 }
 
 impl<T: Freezable> Freezable for &T {
-    fn freeze() -> u64 {
+    fn freeze_with_context(_ctx: &mut FreezeCtx) -> u64 {
         use core::hash::{Hash, Hasher};
         #[allow(deprecated)]
         let mut h = core::hash::SipHasher::new();
@@ -57,7 +57,7 @@ impl<T: Freezable> Freezable for &T {
 
 // mut and const ptr evaluate to the same freeze hash
 impl<T: Freezable> Freezable for *const T {
-    fn freeze() -> u64 {
+    fn freeze_with_context(_ctx: &mut FreezeCtx) -> u64 {
         use core::hash::{Hash, Hasher};
         #[allow(deprecated)]
         let mut h = core::hash::SipHasher::new();
@@ -69,7 +69,7 @@ impl<T: Freezable> Freezable for *const T {
 
 // mut and const ptr evaluate to the same freeze hash
 impl<T: Freezable> Freezable for *mut T {
-    fn freeze() -> u64 {
+    fn freeze_with_context(_ctx: &mut FreezeCtx) -> u64 {
         use core::hash::{Hash, Hasher};
         #[allow(deprecated)]
         let mut h = core::hash::SipHasher::new();
@@ -80,7 +80,7 @@ impl<T: Freezable> Freezable for *mut T {
 }
 
 impl<T: Freezable> Freezable for &[T] {
-    fn freeze() -> u64 {
+    fn freeze_with_context(_ctx: &mut FreezeCtx) -> u64 {
         use core::hash::{Hash, Hasher};
         #[allow(deprecated)]
         let mut h = core::hash::SipHasher::new();
@@ -91,7 +91,7 @@ impl<T: Freezable> Freezable for &[T] {
 }
 
 impl Freezable for &str {
-    fn freeze() -> u64 {
+    fn freeze_with_context(_ctx: &mut FreezeCtx) -> u64 {
         use core::hash::{Hash, Hasher};
         #[allow(deprecated)]
         let mut h = core::hash::SipHasher::new();

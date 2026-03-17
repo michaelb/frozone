@@ -528,3 +528,16 @@ fn zero_sized_type() {
     // type Empty4;
     // assert_eq!(Empty4::freeze(), 0);
 }
+
+#[test]
+fn recursive_types() {
+    #[derive(Freezable)]
+    struct MyType1 {
+        a: Option<MyType2>,
+    }
+    #[derive(Freezable)]
+    struct MyType2 {
+        a: Option<&'static MyType1>,
+    }
+    assert_eq!(MyType1::freeze(), 0)
+}

@@ -26,7 +26,7 @@ pub fn derive_freezable(input: TokenStream) -> TokenStream {
 }
 
 /// generate Freezable impl for the enum
-/// (that recursively call `freeze()` on all non-excluded
+/// (that recursively call `freeze_with_context(ctx)` on all non-excluded
 /// variant and their fields' types)
 fn derive_freezable_enum(
     data: syn::DataEnum,
@@ -106,15 +106,28 @@ fn derive_freezable_enum(
     let (impl_generics, type_generics, where_clause) = generics;
     Ok(quote! {
         impl #impl_generics frozone::Freezable for #name #type_generics #where_clause {
-            fn freeze() -> u64 {
+            fn freeze_with_context(ctx: &mut frozone::FreezeCtx) -> u64 {
                 use core::hash::{Hash, Hasher};
+                let t_id = core::any::TypeId::of::<#name #type_generics>();
+                if let Some((_t, first_depth)) = ctx.cache.iter().find(|(t,d)| *t == t_id) {
+                    // loop detected ! stop recursion and return something 'unique'.
+                    // The 'depth' between the first occurence and now is a 'good' candidate,
+                    // since replacing this type by another equivalent one (not changing semantics,
+                    // per se, but as the global 'structure' graph gets modified..)
+                    return *first_depth as u64 + 1;
+                }
+                ctx.depth += 1;
+                ctx.cache.push((t_id, ctx.depth)).expect("exceeded the 1024 nested types limit");
 
-                [#(#variants_names_and_freezes,)*].iter().fold(0u64, |acc, x: &(&str, u64)| {
+                let freeze = [#(#variants_names_and_freezes,)*].iter().fold(0u64, |acc, x: &(&str, u64)| {
                     let mut hasher = core::hash::SipHasher::new();
                     x.0.hash(&mut hasher);
                     x.1.hash(&mut hasher);
                     acc.overflowing_add(hasher.finish()).0
-                })
+                });
+                ctx.cache.pop();
+                ctx.depth -= 1;
+                freeze
             }
         }
     }
@@ -122,7 +135,7 @@ fn derive_freezable_enum(
 }
 
 /// generate Freezable impl for the struct (that recursively
-/// call `freeze()` on all non-excluded fields' types
+/// call `freeze_with_context(ctx)` on all non-excluded fields' types
 fn derive_freezable_struct(
     data: syn::DataStruct,
     name: &syn::Ident,
@@ -158,15 +171,30 @@ fn derive_freezable_struct(
     let (impl_generics, type_generics, where_clause) = generics;
     let generated = quote! {
         impl #impl_generics frozone::Freezable for #name #type_generics #where_clause {
-            fn freeze() -> u64 {
+            fn freeze_with_context(ctx: &mut frozone::FreezeCtx) -> u64 {
                 use core::hash::{Hash, Hasher};
 
-                [#(#fields,)*].iter().fold(0u64, |acc, x: &(&str, u64) | {
+                let t_id = core::any::TypeId::of::<#name #type_generics>(); // TODO: should convert
+                // all possible lifetimes to 'static
+                if let Some((_t, first_depth)) = ctx.cache.iter().find(|(t,d)| *t == t_id) {
+                    // loop detected ! stop recursion and return something 'unique'.
+                    // The 'depth' between the first occurence and now is a 'good' candidate,
+                    // since replacing this type by another equivalent one (not changing semantics,
+                    // per se, but as the global 'structure' graph gets modified..)
+                    return *first_depth as u64 + 1;
+                }
+                ctx.depth += 1;
+                ctx.cache.push((t_id, ctx.depth)).expect("exceeded the 1024 nested types limit");
+
+                let freeze = [#(#fields,)*].iter().fold(0u64, |acc, x: &(&str, u64) | {
                     let mut hasher = core::hash::SipHasher::new();
                     x.0.hash(&mut hasher);
                     x.1.hash(&mut hasher);
                     acc.overflowing_add(hasher.finish()).0
-                })
+                });
+                ctx.cache.pop();
+                ctx.depth -= 1;
+                freeze
             }
         }
     };

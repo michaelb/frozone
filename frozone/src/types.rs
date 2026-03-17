@@ -7,12 +7,13 @@ mod std;
 
 macro_rules! container_derive_impl {
     ($t:ty) => {
+
         impl<T: Freezable> Freezable for $t {
-            fn freeze() -> u64 {
+            fn freeze_with_context(_ctx: &mut crate::FreezeCtx ) -> u64 {
                 use core::hash::{Hash, Hasher};
                 #[allow(deprecated)]
                 let mut h = core::hash::SipHasher::new();
-                core::any::type_name::<$t>().hash(&mut h); // TODO: use a stabler name
+                core::any::type_name::<$t>().hash(&mut h); // stable enough
                 T::freeze().hash(&mut h);
                 h.finish()
             }
@@ -26,11 +27,11 @@ macro_rules! container_derive_impl {
 macro_rules! generic_derive_impl_no_inner_bound {
     ($t:ty) => {
         impl<T> Freezable for $t {
-            fn freeze() -> u64 {
+            fn freeze_with_context(_ctx: &mut crate::FreezeCtx ) -> u64 {
                 use core::hash::{Hash, Hasher};
                 #[allow(deprecated)]
                 let mut h = core::hash::SipHasher::new();
-                core::any::type_name::<$t>().hash(&mut h); // TODO: use a stabler name
+                core::any::type_name::<$t>().hash(&mut h); // stable enough
                 h.finish()
             }
         }
@@ -43,11 +44,11 @@ macro_rules! assume_frozen {
     ($t:ty) => {
 
         impl Freezable for $t {
-            fn freeze() -> u64 {
+            fn freeze_with_context(_ctx: &mut crate::FreezeCtx ) -> u64 {
                 use core::hash::{Hash, Hasher};
                 #[allow(deprecated)]
                 let mut h = core::hash::SipHasher::new();
-                core::any::type_name::<$t>().hash(&mut h); // TODO: use a stabler name
+                core::any::type_name::<$t>().hash(&mut h); // stable enough
                 h.finish()
             }
         }
