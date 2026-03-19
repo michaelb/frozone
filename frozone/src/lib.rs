@@ -4,6 +4,7 @@ mod types;
 pub use frozone_derive::Freezable;
 use heapless::Vec;
 
+#[derive(Debug)]
 pub struct FreezeCtx {
     // type, depth where type was found at
     pub cache: Vec<(core::any::TypeId, u32), 1024>,

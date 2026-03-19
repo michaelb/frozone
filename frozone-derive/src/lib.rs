@@ -3,17 +3,17 @@ use proc_macro::TokenStream;
 use proc_macro2::Span;
 use quote::quote;
 
-use syn::{Error, Result};
+use syn::{Error, GenericParam, Generics, Result};
 
 #[proc_macro_derive(Freezable, attributes(assume_frozen))]
 pub fn derive_freezable(input: TokenStream) -> TokenStream {
     let ast: syn::DeriveInput = syn::parse_macro_input!(input);
     let name = &ast.ident;
-    let generics = ast.generics.split_for_impl();
+    let generics = ast.generics;
 
     let res = match ast.data {
-        syn::Data::Struct(data) => derive_freezable_struct(data, name, generics),
-        syn::Data::Enum(data) => derive_freezable_enum(data, name, generics),
+        syn::Data::Struct(data) => derive_freezable_struct(data, name, &generics),
+        syn::Data::Enum(data) => derive_freezable_enum(data, name, &generics),
         _ => Err(Error::new(
             Span::call_site(),
             "can only derive trait Freezable for struct or enums",
@@ -31,11 +31,7 @@ pub fn derive_freezable(input: TokenStream) -> TokenStream {
 fn derive_freezable_enum(
     data: syn::DataEnum,
     name: &syn::Ident,
-    generics: (
-        syn::ImplGenerics,
-        syn::TypeGenerics,
-        Option<&syn::WhereClause>,
-    ),
+    generics: &Generics,
 ) -> Result<TokenStream> {
     let variants_names_and_freezes = data.variants.iter().map(|f| {
         let name = &f.ident;
@@ -103,13 +99,14 @@ fn derive_freezable_enum(
         }
     });
 
-    let (impl_generics, type_generics, where_clause) = generics;
+    let (impl_generics, type_generics, where_clause) = generics.split_for_impl();
+    let unit_generics = generics_to_unit(generics);
     Ok(quote! {
         impl #impl_generics frozone::Freezable for #name #type_generics #where_clause {
             fn freeze_with_context(ctx: &mut frozone::FreezeCtx) -> u64 {
                 use core::hash::{Hash, Hasher};
-                let t_id = core::any::TypeId::of::<#name #type_generics>();
-                if let Some((_t, first_depth)) = ctx.cache.iter().find(|(t,d)| *t == t_id) {
+                let t_id = core::any::TypeId::of::<#name #unit_generics>();
+                if let Some((_t, first_depth)) = ctx.cache.iter().find(|(t,_d)| *t == t_id) {
                     // loop detected ! stop recursion and return something 'unique'.
                     // The 'depth' between the first occurence and now is a 'good' candidate,
                     // since replacing this type by another equivalent one (not changing semantics,
@@ -139,11 +136,7 @@ fn derive_freezable_enum(
 fn derive_freezable_struct(
     data: syn::DataStruct,
     name: &syn::Ident,
-    generics: (
-        syn::ImplGenerics,
-        syn::TypeGenerics,
-        Option<&syn::WhereClause>,
-    ),
+    generics: &Generics,
 ) -> Result<TokenStream> {
     let fields = data.fields.iter().map(|f| {
         let name = &f
@@ -158,25 +151,37 @@ fn derive_freezable_struct(
                 freeze_field_only_generics(ty, name)
             } else {
                 quote! {
-                    (stringify!(#name), 0)
+                    {
+                        let x: Box<dyn Fn(&mut frozone::FreezeCtx) -> (&str, u64)> = Box::new(|ctx|
+                            (stringify!(#name), 0)
+                        );
+                        x
+                    }
                 }
             }
         } else {
             quote! {
-                (stringify!(#name), <#ty as frozone::Freezable>::freeze())
+                {
+                    let x: Box<dyn Fn(&mut frozone::FreezeCtx) -> (&str, u64)> = Box::new(|ctx| (
+                        stringify!(#name),
+                        <#ty as frozone::Freezable>::freeze_with_context(ctx)
+                    ));
+                    x
+                }
             }
         }
     });
 
-    let (impl_generics, type_generics, where_clause) = generics;
+    let (impl_generics, type_generics, where_clause) = generics.split_for_impl();
+    let unit_generics = generics_to_unit(generics);
     let generated = quote! {
         impl #impl_generics frozone::Freezable for #name #type_generics #where_clause {
             fn freeze_with_context(ctx: &mut frozone::FreezeCtx) -> u64 {
                 use core::hash::{Hash, Hasher};
 
-                let t_id = core::any::TypeId::of::<#name #type_generics>(); // TODO: should convert
+                let t_id = core::any::TypeId::of::<#name #unit_generics>();
                 // all possible lifetimes to 'static
-                if let Some((_t, first_depth)) = ctx.cache.iter().find(|(t,d)| *t == t_id) {
+                if let Some((_t, first_depth)) = ctx.cache.iter().find(|(t,_d)| *t == t_id) {
                     // loop detected ! stop recursion and return something 'unique'.
                     // The 'depth' between the first occurence and now is a 'good' candidate,
                     // since replacing this type by another equivalent one (not changing semantics,
@@ -185,11 +190,13 @@ fn derive_freezable_struct(
                 }
                 ctx.depth += 1;
                 ctx.cache.push((t_id, ctx.depth)).expect("exceeded the 1024 nested types limit");
+                println!("ctx = {ctx:?}");
 
-                let freeze = [#(#fields,)*].iter().fold(0u64, |acc, x: &(&str, u64) | {
+                let freeze = [#(#fields,)*].iter().fold(0u64, |acc: u64, x: &Box<dyn Fn(&mut frozone::FreezeCtx) -> (&str, u64)> | {
                     let mut hasher = core::hash::SipHasher::new();
-                    x.0.hash(&mut hasher);
-                    x.1.hash(&mut hasher);
+                    let y = x(ctx);
+                    y.0.hash(&mut hasher);
+                    y.1.hash(&mut hasher);
                     acc.overflowing_add(hasher.finish()).0
                 });
                 ctx.cache.pop();
@@ -209,12 +216,7 @@ fn freeze_field_only_generics(ty: &syn::Type, name: &syn::Ident) -> proc_macro2:
         syn::Type::Path(p) => {
             let type_segments = p.path.segments.iter().map(|ps| {
                 match &ps.arguments {
-                    syn::PathArguments::None => quote! {
-                        {
-                            let mut hasher = core::hash::SipHasher::new();
-                            hasher.finish()
-                        }
-                    },
+
                     syn::PathArguments::AngleBracketed(bracketed) => {
                         let generics = bracketed
                             .args
@@ -224,60 +226,94 @@ fn freeze_field_only_generics(ty: &syn::Type, name: &syn::Ident) -> proc_macro2:
                                 _ => None,
                             })
                             .map(|t| {
-                                quote! {
-                                <#t as frozone::Freezable>::freeze()
-                                }
+                                quote! {{
+                                    let x: Box<dyn Fn(&mut frozone::FreezeCtx) -> u64> = Box::new(|ctx| (
+                                        <#t as frozone::Freezable>::freeze_with_context(ctx)
+                                    ));
+                                    x
+                                }}
                             });
                         quote! {{
-                            let mut hasher = core::hash::SipHasher::new();
-                            "GenericType".hash(&mut hasher); // prevent collisions with parenthesized generics
-                            [#(#generics,)*].iter().for_each(|x: &u64| {
-                                x.hash(&mut hasher);
-                            });
-                            hasher.finish()
+                            let x: Box<dyn Fn(&mut frozone::FreezeCtx) -> u64> = Box::new(|ctx| ({
+                                let mut hasher = core::hash::SipHasher::new();
+                                "GenericType".hash(&mut hasher); // prevent collisions with parenthesized generics
+                                [#(#generics,)*].iter().for_each(|x: &Box<dyn Fn(&mut frozone::FreezeCtx) ->  u64>| {
+                                    x(ctx).hash(&mut hasher);
+                                });
+                                hasher.finish()
+                            }));
+                            x
                         }}
                     }
                     // not sure how those would be constructed though
                     syn::PathArguments::Parenthesized(parenthesized) => {
                         let generic_output = match &parenthesized.output {
                             syn::ReturnType::Default => quote! {
-                                <() as frozone::Freezable>::freeze()
+                                 Box::new(|ctx| (
+                                    <() as frozone::Freezable>::freeze_with_context(ctx)
+                                )) as Box<dyn Fn(&mut frozone::FreezeCtx) -> u64>
                             },
                             syn::ReturnType::Type(_, box_of_t) => {
                                 let inner_type = *box_of_t.clone();
                                 quote! {
-                                    <#inner_type as frozone::Freezable>::freeze()
+                                        // <#inner_type as frozone::Freezable>::freeze()
+
+                                        Box<dyn Fn(&mut frozone::FreezeCtx) -> u64> = Box::new(|ctx| (
+                                            <#inner_type as frozone::Freezable>::freeze_with_context(ctx)
+                                        )) as Box<dyn Fn(&mut frozone::FreezeCtx) -> u64>
                                 }
                             }
                         };
                         let generic_input = parenthesized.inputs.iter().map(|t| {
-                            quote! {
-                            <#t as frozone::Freezable>::freeze()
-                            }
+                            quote! {{
+                                    // <#t as frozone::Freezable>::freeze()
+
+                                    let x: Box<dyn Fn(&mut frozone::FreezeCtx) -> u64> = Box::new(|ctx| (
+                                        <#t as frozone::Freezable>::freeze_with_context(ctx)
+                                    ));
+                                    x
+                                }}
                         });
 
                         quote! {{
 
-                            let mut hasher = core::hash::SipHasher::new();
-                            "GenericFunc".hash(&mut hasher); // prevent collisions with bracketed generics
-                            [#(#generic_input,)*].iter().for_each(|x: &u64| {
-                                x.hash(&mut hasher);
-                            });
-                            #generic_output.hash(&mut hasher);
-                            hasher.finish()
+                            let x: Box<dyn Fn(&mut frozone::FreezeCtx) -> u64> = Box::new(|ctx| ({
+                                let mut hasher = core::hash::SipHasher::new();
+                                "GenericFunc".hash(&mut hasher); // prevent collisions with bracketed generics
+                                [#(#generic_input,)*].iter().for_each(|x: &Box<dyn Fn(&mut frozone::FreezeCtx) ->  u64>| {
+                                    x(ctx).hash(&mut hasher);
+                                });
+                                let out = #generic_output;
+                                out(ctx).hash(&mut hasher);
+                                hasher.finish()
+                            }));
+                            x
                         }}
                     }
-                }
+                    syn::PathArguments::None => quote! {
+                    // _ => quote! {
+                        {
+                            let mut hasher = core::hash::SipHasher::new();
+                            hasher.finish()
+                        }
+                    },}
             });
             quote! {
-                (stringify!(#name), {
-                    let mut hasher = core::hash::SipHasher::new();
+                {
+                    let x: Box<dyn Fn(&mut frozone::FreezeCtx) -> (&str, u64)> = Box::new(|ctx|
+                        (
+                        stringify!(#name),
+                        {
+                            let mut hasher = core::hash::SipHasher::new();
 
-                    [#(#type_segments,)*].iter().for_each(|x: &u64| {
-                        x.hash(&mut hasher);
-                    });
-                    hasher.finish()
-                })
+                            [#(#type_segments,)*].iter().for_each(|x: &Box<dyn Fn(&mut frozone::FreezeCtx) ->  u64>| {
+                                x(ctx).hash(&mut hasher);
+                            });
+                            hasher.finish()
+                        })
+                    );
+                    x
+                }
             }
         }
         _ => {
@@ -295,4 +331,26 @@ fn attr_helper_freeze_generics(attr: &syn::Attribute) -> bool {
     }); // may be err if there is no parenthesis inside the #[assume_frozen] attr
     // println!("found generic {found_freeze_generic:?}");
     return found_freeze_generic;
+}
+
+fn generics_to_unit(generics: &syn::Generics) -> proc_macro2::TokenStream {
+    if generics.params.is_empty() {
+        return quote! {};
+    }
+    let unit_args = generics.params.iter().filter_map(|param| {
+        match param {
+            // Transform Type parameters (e.g., T) to ()
+            syn::GenericParam::Type(_) => Some(quote! { () }),
+
+            // Transform Const parameters (e.g., const N: usize) to a value or ()
+            // Note: Const generics usually need a value, but in some type contexts () works
+            syn::GenericParam::Const(_) => Some(quote! { () }),
+
+            // Lifetimes are usually stripped when trying to reach a 'static-like'
+            // representation, as () satisfies 'static.
+            GenericParam::Lifetime(_) => None,
+        }
+    });
+
+    quote! { < #(#unit_args),* > }
 }

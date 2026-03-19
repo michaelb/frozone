@@ -27,23 +27,23 @@ container_derive_impl!(
 );
 
 impl<T: Freezable, E: Freezable> Freezable for BTreeMap<T, E> {
-    fn freeze_with_context(_ctx: &mut FreezeCtx) -> u64 {
+    fn freeze_with_context(ctx: &mut FreezeCtx) -> u64 {
         use core::hash::{Hash, Hasher};
         #[allow(deprecated)]
         let mut h = core::hash::SipHasher::new();
         "BTreeMap".hash(&mut h);
-        T::freeze().hash(&mut h);
-        E::freeze().hash(&mut h);
+        T::freeze_with_context(ctx).hash(&mut h);
+        E::freeze_with_context(ctx).hash(&mut h);
         h.finish()
     }
 }
 impl<T: Freezable + Clone> Freezable for Cow<'_, T> {
-    fn freeze_with_context(_ctx: &mut FreezeCtx) -> u64 {
+    fn freeze_with_context(ctx: &mut FreezeCtx) -> u64 {
         use core::hash::{Hash, Hasher};
         #[allow(deprecated)]
         let mut h = core::hash::SipHasher::new();
         "Cow".hash(&mut h);
-        T::freeze().hash(&mut h);
+        T::freeze_with_context(ctx).hash(&mut h);
         h.finish()
     }
 }

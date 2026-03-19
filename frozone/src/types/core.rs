@@ -33,13 +33,13 @@ container_derive_impl!(
 );
 
 impl<T: Freezable, E: Freezable> Freezable for Result<T, E> {
-    fn freeze_with_context(_ctx: &mut FreezeCtx) -> u64 {
+    fn freeze_with_context(ctx: &mut FreezeCtx) -> u64 {
         use core::hash::{Hash, Hasher};
         #[allow(deprecated)]
         let mut h = core::hash::SipHasher::new();
         "Result".hash(&mut h); // prevent collisions with other containers types
-        T::freeze().hash(&mut h);
-        E::freeze().hash(&mut h);
+        T::freeze_with_context(ctx).hash(&mut h);
+        E::freeze_with_context(ctx).hash(&mut h);
         h.finish()
     }
 }
@@ -76,25 +76,25 @@ container_derive_impl!(
 );
 
 impl<T: Freezable> Freezable for (T,) {
-    fn freeze_with_context(_ctx: &mut FreezeCtx) -> u64 {
+    fn freeze_with_context(ctx: &mut FreezeCtx) -> u64 {
         use core::hash::{Hash, Hasher};
         #[allow(deprecated)]
         let mut h = core::hash::SipHasher::new();
         "(,)".hash(&mut h); // prevent collisions with other container types
         1.hash(&mut h); // add tuple len to hash
-        T::freeze().hash(&mut h);
+        T::freeze_with_context(ctx).hash(&mut h);
         h.finish()
     }
 }
 impl<T: Freezable, U: Freezable> Freezable for (T, U) {
-    fn freeze_with_context(_ctx: &mut FreezeCtx) -> u64 {
+    fn freeze_with_context(ctx: &mut FreezeCtx) -> u64 {
         use core::hash::{Hash, Hasher};
         #[allow(deprecated)]
         let mut h = core::hash::SipHasher::new();
         "(,)".hash(&mut h); // prevent collisions with other container types
         2.hash(&mut h); // add tuple len to hash
-        T::freeze().hash(&mut h);
-        U::freeze().hash(&mut h);
+        T::freeze_with_context(ctx).hash(&mut h);
+        U::freeze_with_context(ctx).hash(&mut h);
         h.finish()
     }
 }
@@ -107,13 +107,13 @@ macro_rules! tuple_derive_impl {
             $($ty: Freezable),*
         {
 
-            fn freeze_with_context(_ctx: &mut FreezeCtx) -> u64 {
+            fn freeze_with_context(ctx: &mut FreezeCtx) -> u64 {
                 use core::hash::{Hash, Hasher};
                 #[allow(deprecated)]
                 let mut h = core::hash::SipHasher::new();
                 "(,)".hash(&mut h); // prevent collisions with other container types
-                [($($ty::freeze(),)*)].len().hash(&mut h); // small hack to add tuple len to hash
-                ($($ty::freeze().hash(&mut h),)*);
+                [($($ty::freeze_with_context(ctx),)*)].len().hash(&mut h); // small hack to add tuple len to hash
+                ($($ty::freeze_with_context(ctx).hash(&mut h),)*);
                 h.finish()
             }
         }
@@ -155,61 +155,61 @@ container_derive_impl!(
 );
 // Flatten and Once have additional requirements, so they're not included
 impl<T: Freezable, E: Freezable> Freezable for Chain<T, E> {
-    fn freeze_with_context(_ctx: &mut FreezeCtx) -> u64 {
+    fn freeze_with_context(ctx: &mut FreezeCtx) -> u64 {
         use core::hash::{Hash, Hasher};
         #[allow(deprecated)]
         let mut h = core::hash::SipHasher::new();
         "Chain".hash(&mut h);
-        T::freeze().hash(&mut h);
-        E::freeze().hash(&mut h);
+        T::freeze_with_context(ctx).hash(&mut h);
+        E::freeze_with_context(ctx).hash(&mut h);
         h.finish()
     }
 }
 
 impl<T: Freezable, E: Freezable> Freezable for Filter<T, E> {
-    fn freeze_with_context(_ctx: &mut FreezeCtx) -> u64 {
+    fn freeze_with_context(ctx: &mut FreezeCtx) -> u64 {
         use core::hash::{Hash, Hasher};
         #[allow(deprecated)]
         let mut h = core::hash::SipHasher::new();
         "Filter".hash(&mut h);
-        T::freeze().hash(&mut h);
-        E::freeze().hash(&mut h);
+        T::freeze_with_context(ctx).hash(&mut h);
+        E::freeze_with_context(ctx).hash(&mut h);
         h.finish()
     }
 }
 
 impl<T: Freezable, E: Freezable> Freezable for Inspect<T, E> {
-    fn freeze_with_context(_ctx: &mut FreezeCtx) -> u64 {
+    fn freeze_with_context(ctx: &mut FreezeCtx) -> u64 {
         use core::hash::{Hash, Hasher};
         #[allow(deprecated)]
         let mut h = core::hash::SipHasher::new();
         "Inspect".hash(&mut h);
-        T::freeze().hash(&mut h);
-        E::freeze().hash(&mut h);
+        T::freeze_with_context(ctx).hash(&mut h);
+        E::freeze_with_context(ctx).hash(&mut h);
         h.finish()
     }
 }
 
 impl<T: Freezable, E: Freezable> Freezable for Map<T, E> {
-    fn freeze_with_context(_ctx: &mut FreezeCtx) -> u64 {
+    fn freeze_with_context(ctx: &mut FreezeCtx) -> u64 {
         use core::hash::{Hash, Hasher};
         #[allow(deprecated)]
         let mut h = core::hash::SipHasher::new();
         "Map".hash(&mut h);
-        T::freeze().hash(&mut h);
-        E::freeze().hash(&mut h);
+        T::freeze_with_context(ctx).hash(&mut h);
+        E::freeze_with_context(ctx).hash(&mut h);
         h.finish()
     }
 }
 
 impl<T: Freezable, E: Freezable> Freezable for Zip<T, E> {
-    fn freeze_with_context(_ctx: &mut FreezeCtx) -> u64 {
+    fn freeze_with_context(ctx: &mut FreezeCtx) -> u64 {
         use core::hash::{Hash, Hasher};
         #[allow(deprecated)]
         let mut h = core::hash::SipHasher::new();
         "Zip".hash(&mut h);
-        T::freeze().hash(&mut h);
-        E::freeze().hash(&mut h);
+        T::freeze_with_context(ctx).hash(&mut h);
+        E::freeze_with_context(ctx).hash(&mut h);
         h.finish()
     }
 }

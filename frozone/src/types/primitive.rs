@@ -22,70 +22,70 @@ assume_frozen!(
 );
 
 impl<T: Freezable, const N: usize> Freezable for [T; N] {
-    fn freeze_with_context(_ctx: &mut FreezeCtx) -> u64 {
+    fn freeze_with_context(ctx: &mut FreezeCtx) -> u64 {
         use core::hash::{Hash, Hasher};
         #[allow(deprecated)]
         let mut h = core::hash::SipHasher::new();
         "[;N]".hash(&mut h);
         N.hash(&mut h);
-        T::freeze().hash(&mut h);
+        T::freeze_with_context(ctx).hash(&mut h);
         h.finish()
     }
 }
 
 impl<T: Freezable> Freezable for [T] {
-    fn freeze_with_context(_ctx: &mut FreezeCtx) -> u64 {
+    fn freeze_with_context(ctx: &mut FreezeCtx) -> u64 {
         use core::hash::{Hash, Hasher};
         #[allow(deprecated)]
         let mut h = core::hash::SipHasher::new();
         "[]".hash(&mut h);
-        T::freeze().hash(&mut h);
+        T::freeze_with_context(ctx).hash(&mut h);
         h.finish()
     }
 }
 
 impl<T: Freezable> Freezable for &T {
-    fn freeze_with_context(_ctx: &mut FreezeCtx) -> u64 {
+    fn freeze_with_context(ctx: &mut FreezeCtx) -> u64 {
         use core::hash::{Hash, Hasher};
         #[allow(deprecated)]
         let mut h = core::hash::SipHasher::new();
         "&".hash(&mut h);
-        T::freeze().hash(&mut h);
+        T::freeze_with_context(ctx).hash(&mut h);
         h.finish()
     }
 }
 
 // mut and const ptr evaluate to the same freeze hash
 impl<T: Freezable> Freezable for *const T {
-    fn freeze_with_context(_ctx: &mut FreezeCtx) -> u64 {
+    fn freeze_with_context(ctx: &mut FreezeCtx) -> u64 {
         use core::hash::{Hash, Hasher};
         #[allow(deprecated)]
         let mut h = core::hash::SipHasher::new();
         "*const".hash(&mut h);
-        T::freeze().hash(&mut h);
+        T::freeze_with_context(ctx).hash(&mut h);
         h.finish()
     }
 }
 
 // mut and const ptr evaluate to the same freeze hash
 impl<T: Freezable> Freezable for *mut T {
-    fn freeze_with_context(_ctx: &mut FreezeCtx) -> u64 {
+    fn freeze_with_context(ctx: &mut FreezeCtx) -> u64 {
         use core::hash::{Hash, Hasher};
         #[allow(deprecated)]
         let mut h = core::hash::SipHasher::new();
         "*mut".hash(&mut h);
-        T::freeze().hash(&mut h);
+        T::freeze_with_context(ctx).hash(&mut h);
         h.finish()
     }
 }
 
 impl<T: Freezable> Freezable for &[T] {
-    fn freeze_with_context(_ctx: &mut FreezeCtx) -> u64 {
+    fn freeze_with_context(ctx: &mut FreezeCtx) -> u64 {
         use core::hash::{Hash, Hasher};
         #[allow(deprecated)]
         let mut h = core::hash::SipHasher::new();
         "&[]".hash(&mut h);
-        T::freeze().hash(&mut h);
+        T::freeze_with_context(ctx).hash(&mut h);
         h.finish()
     }
 }
