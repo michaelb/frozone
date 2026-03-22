@@ -1,6 +1,6 @@
 [package]
 name = "frozone"
-version = "0.3.0"
+version = "0.4.0"
 edition = "2024"
 authors = ["Michael Bleuez <michael.bleuez2@gmail.com>"]
 description = "Freeze structs and enums in time"
@@ -14,7 +14,7 @@ default = ["std"]
 std = []
 
 [dependencies]
-frozone-derive = { path = "../frozone-derive", version = "0.3.0", default-features=false }
-heapless = "0.9.2"
+frozone-derive = { path = "../frozone-derive", version = "0.4.0", default-features=false }
+heapless = "0.8.0"
 [dev-dependencies]
 static_assertions = "1.1.0"

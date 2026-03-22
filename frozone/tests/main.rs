@@ -438,7 +438,6 @@ fn struct_names_non_importance() {
 }
 
 #[test]
-#[cfg(feature = "alloc")]
 fn full_type_names() {
     #[derive(Freezable)]
     struct MyType1 {
@@ -604,6 +603,7 @@ fn recursive_types_advanced() {
 }
 
 #[test]
+#[cfg(feature = "std")]
 fn complex() {
     // test on iced Application structure
     pub trait Program: Sized {
