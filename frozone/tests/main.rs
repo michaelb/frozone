@@ -72,7 +72,7 @@ fn derive_container() {
         field_a: u64,
     }
 
-    assert_eq!(MyType::freeze(), 2592227803823060039);
+    assert_eq!(MyType::freeze(), 8960718244642525187);
 }
 
 #[test]
@@ -84,7 +84,7 @@ fn derive_generic() {
         field_d: Box<T>,
     }
 
-    assert_eq!(MyType::<u64>::freeze(), 11469247882469511076);
+    assert_eq!(MyType::<u64>::freeze(), 8534488491191601984);
 
     #[derive(Freezable)]
     struct MyType2<'a> {
@@ -100,7 +100,7 @@ fn derive_generic() {
     }
     assert_eq!(
         MyType3::<u64, Option<()>, Result<u64, u32>>::freeze(),
-        1191792184500522394
+        2581063238814899371
     );
 }
 
@@ -354,27 +354,26 @@ fn external_generic() {
         A(External1<MyType1>),
     }
 
-    // TODO: reenable
-    // #[derive(Freezable)]
-    // enum MyEnumType4 {
-    //     #[assume_frozen(freeze_generics)]
-    //     A(External1<MyType2>),
-    // }
-    //
-    // #[derive(Freezable)]
-    // enum MyEnumType5 {
-    //     #[assume_frozen(freeze_generics)]
-    //     A(External2<MyType2>),
-    // }
-    // #[derive(Freezable)]
-    // enum MyEnumType6 {
-    //     #[assume_frozen(freeze_generics)]
-    //     A(External2<MyType1>),
-    // }
-    //
-    // assert_ne!(MyEnumType3::freeze(), MyEnumType4::freeze());
-    // assert_eq!(MyEnumType5::freeze(), MyEnumType4::freeze());
-    // assert_ne!(MyEnumType5::freeze(), MyEnumType6::freeze());
+    #[derive(Freezable)]
+    enum MyEnumType4 {
+        #[assume_frozen(freeze_generics)]
+        A(External1<MyType2>),
+    }
+
+    #[derive(Freezable)]
+    enum MyEnumType5 {
+        #[assume_frozen(freeze_generics)]
+        A(External2<MyType2>),
+    }
+    #[derive(Freezable)]
+    enum MyEnumType6 {
+        #[assume_frozen(freeze_generics)]
+        A(External2<MyType1>),
+    }
+
+    assert_ne!(MyEnumType3::freeze(), MyEnumType4::freeze());
+    assert_eq!(MyEnumType5::freeze(), MyEnumType4::freeze());
+    assert_ne!(MyEnumType5::freeze(), MyEnumType6::freeze());
 }
 
 #[test]
@@ -564,5 +563,44 @@ fn recursive_types() {
     struct MyType2 {
         a: Option<&'static MyType1>,
     }
-    assert_eq!(MyType1::freeze(), 1744362538489533539)
+    assert_eq!(MyType1::freeze(), 11355567332989466119);
+
+    #[derive(Freezable)]
+    enum MyType3 {
+        A(Option<MyType4>),
+    }
+    #[derive(Freezable)]
+    enum MyType4 {
+        A(Option<&'static MyType3>),
+    }
+    assert_eq!(MyType3::freeze(), 2378750370645629984);
+}
+
+#[test]
+fn recursive_types_advanced() {
+    #[derive(Freezable)]
+    struct Cycle2_1 {
+        a: Box<Option<Cycle2_2>>,
+    }
+    #[derive(Freezable)]
+    struct Cycle2_2 {
+        a: Box<Option<Cycle2_1>>,
+    }
+
+    #[derive(Freezable)]
+    struct Cycle3_1 {
+        a: Box<Option<Cycle3_2>>,
+    }
+    #[derive(Freezable)]
+    struct Cycle3_2 {
+        a: Box<Option<Cycle3_3>>,
+    }
+    #[derive(Freezable)]
+    struct Cycle3_3 {
+        a: Box<Option<Cycle3_1>>,
+    }
+    assert_eq!(Cycle2_1::freeze(), Cycle2_2::freeze());
+    assert_eq!(Cycle3_1::freeze(), Cycle3_2::freeze());
+    assert_eq!(Cycle3_1::freeze(), Cycle3_3::freeze());
+    assert_ne!(Cycle2_1::freeze(), Cycle3_1::freeze());
 }

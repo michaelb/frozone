@@ -93,8 +93,11 @@ fn main() {
 pub struct StructName {       // visibility qualifier, struct name: NOT FROZEN
     field_name: FieldType,    // field names, fields types: FROZEN
 
-    #[assume_frozen]                             // assume_frozen'd field name: FROZEN
-    assumed_frozen_field_name: ExternalFieldType // assume_frozen'd field type: NOT FROZEN
+    #[assume_frozen]                              // assume_frozen'd field name: FROZEN
+    assumed_frozen_field_name: ExternalFieldType, // assume_frozen'd field type: NOT FROZEN
+
+    #[assume_frozen(freeze_generics)]
+    test: Vec<FieldType>, // field name : FROZEN, container type: NOT FROZEN, contained type(s): FROZEN
 }
 // note: the order of the fields is "not frozen"
 
@@ -110,6 +113,56 @@ enum FieldType {  // enum name: NOT FROZEN
 }
 // note: the order of the variants is "not frozen"
 ```
+
+<details>
+
+<summary>Note about 'type-recursiveness'</summary>
+
+`frozone` supports enums & structs that are 'type-recursive', aka they embed
+themselves (but with indirections, obv.), such as:
+
+```rust
+struct T1 {
+    a: Box<Option<T1>>
+}
+
+// or
+
+struct T2 {
+    a: Box<T3>,
+}
+struct T3 {
+    b: Option<T2>
+}
+```
+
+In some more complex cases, such as:
+
+```rust
+struct Cycle2_1 {
+    a: Box<Option<Cycle2_2>>
+}
+struct Cycle2_2 {
+    a: Box<Option<Cycle2_1>>
+}
+
+struct Cycle3_1 {
+    a: Box<Option<Cycle3_2>>
+}
+struct Cycle3_2 {
+    a: Box<Option<Cycle3_3>>
+}
+struct Cycle3_3 {
+    a: Box<Option<Cycle3_1>>
+}
+```
+
+While in a serialized form it would be hard to distinguish `Cycle2_1` from `Cycle3_1`,
+frozone understands that those are not equivalent semantically, and therefore they will
+have different `freeze()` values
+
+
+</details>
 
 
 ## Roadmap

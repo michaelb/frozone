@@ -1,5 +1,5 @@
 use crate::{
-    Freezable, FreezeCtx,
+    Freezable,
     types::{assume_frozen, container_derive_impl},
 };
 

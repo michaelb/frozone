@@ -13,7 +13,8 @@ macro_rules! container_derive_impl {
                 use core::hash::{Hash, Hasher};
                 #[allow(deprecated)]
                 let mut h = core::hash::SipHasher::new();
-                core::any::type_name::<$t>().hash(&mut h); // stable enough
+                let name = stringify!($t);
+                name[..name.find('<').unwrap()].hash(&mut h);
                 T::freeze_with_context(ctx).hash(&mut h);
                 h.finish()
             }
@@ -31,7 +32,8 @@ macro_rules! generic_derive_impl_no_inner_bound {
                 use core::hash::{Hash, Hasher};
                 #[allow(deprecated)]
                 let mut h = core::hash::SipHasher::new();
-                core::any::type_name::<$t>().hash(&mut h); // stable enough
+                let name = stringify!($t);
+                name[..name.find('<').unwrap()].hash(&mut h);
                 h.finish()
             }
         }
@@ -40,6 +42,7 @@ macro_rules! generic_derive_impl_no_inner_bound {
         $(generic_derive_impl_no_inner_bound!($t);)*
     }
 }
+
 macro_rules! assume_frozen {
     ($t:ty) => {
 
