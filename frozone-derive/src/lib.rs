@@ -147,10 +147,9 @@ fn derive_freezable_struct(
     generics: &Generics,
 ) -> Result<TokenStream> {
     let fields = data.fields.iter().map(|f| {
-        let name = &f
-            .ident
-            .as_ref()
-            .expect(&core::panic::Location::caller().to_string());
+        // for tuple struct definitions e.g. `struct MyInstant(std::time::Instant)`
+        let empty_ident = proc_macro2::Ident::new("_", proc_macro2::Span::call_site());
+        let name = &f.ident.as_ref().unwrap_or(&empty_ident);
         let ty = &f.ty;
         if let Some(af) = f.attrs.iter().find(|a| a.path().is_ident("assume_frozen")) {
             if attr_helper_freeze_generics(&af) {

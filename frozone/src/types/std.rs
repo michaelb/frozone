@@ -17,7 +17,7 @@ use std::sync::{
 };
 
 use std::thread::{Builder, JoinHandle, LocalKey, Thread, ThreadId};
-use std::time::SystemTime;
+use std::time::{Instant, SystemTime};
 
 container_derive_impl!(
     Mutex<T>,
@@ -75,5 +75,6 @@ assume_frozen!(
     Builder,
     Thread,
     ThreadId,
-    SystemTime
+    SystemTime,
+    Instant
 );

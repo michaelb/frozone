@@ -58,7 +58,6 @@ fn derive() {
 }
 
 #[test]
-#[cfg(feature = "alloc")]
 fn derive_container() {
     #[derive(Freezable)]
     struct MyType {
@@ -76,7 +75,6 @@ fn derive_container() {
 }
 
 #[test]
-#[cfg(feature = "alloc")]
 fn derive_generic() {
     #[derive(Freezable)]
     struct MyType<T: frozone::Freezable> {
@@ -603,4 +601,252 @@ fn recursive_types_advanced() {
     assert_eq!(Cycle3_1::freeze(), Cycle3_2::freeze());
     assert_eq!(Cycle3_1::freeze(), Cycle3_3::freeze());
     assert_ne!(Cycle2_1::freeze(), Cycle3_1::freeze());
+}
+
+#[test]
+fn complex() {
+    // test on iced Application structure
+    pub trait Program: Sized {
+        type State: Freezable;
+        type Message: Send + 'static + Freezable;
+        type Theme: Base;
+        type Renderer: Renderer;
+        type Executor: Executor;
+    }
+    pub trait Base {}
+    pub trait Renderer {}
+    pub trait Executor: Sized {}
+    #[derive(Freezable)]
+    pub struct Size<T: Freezable = f32> {
+        pub width: T,
+        pub height: T,
+    }
+    #[derive(Freezable)]
+    pub struct Point<T: Freezable = f32> {
+        pub x: T,
+        pub y: T,
+    }
+    #[derive(Freezable)]
+    pub enum Position {
+        Default,
+        Centered,
+        Specific(Point),
+        #[assume_frozen] // TODO: limitation to fix
+        SpecificWith(fn(Size, Size) -> Point),
+    }
+    #[derive(Freezable)]
+    pub struct Color {
+        pub r: f32,
+        pub g: f32,
+        pub b: f32,
+        pub a: f32,
+    }
+    #[derive(Freezable)]
+    pub struct Palette {
+        pub background: Color,
+        pub text: Color,
+        pub primary: Color,
+        pub success: Color,
+        pub warning: Color,
+        pub danger: Color,
+    }
+    #[derive(Freezable)]
+    pub struct Pair {
+        pub color: Color,
+        pub text: Color,
+    }
+    #[derive(Freezable)]
+    pub struct Background {
+        pub base: Pair,
+        pub weakest: Pair,
+        pub weaker: Pair,
+        pub weak: Pair,
+        pub neutral: Pair,
+        pub strong: Pair,
+        pub stronger: Pair,
+        pub strongest: Pair,
+    }
+    #[derive(Freezable)]
+    pub struct Primary {
+        pub base: Pair,
+        pub weak: Pair,
+        pub strong: Pair,
+    }
+    #[derive(Freezable)]
+    pub struct Secondary {
+        pub base: Pair,
+        pub weak: Pair,
+        pub strong: Pair,
+    }
+    #[derive(Freezable)]
+    pub struct Success {
+        pub base: Pair,
+        pub weak: Pair,
+        pub strong: Pair,
+    }
+    #[derive(Freezable)]
+    pub struct Danger {
+        pub base: Pair,
+        pub weak: Pair,
+        pub strong: Pair,
+    }
+    #[derive(Freezable)]
+    pub struct Warning {
+        pub base: Pair,
+        pub weak: Pair,
+        pub strong: Pair,
+    }
+    #[derive(Freezable)]
+    pub struct Extended {
+        pub background: Background,
+        pub primary: Primary,
+        pub secondary: Secondary,
+        pub success: Success,
+        pub warning: Warning,
+        pub danger: Danger,
+        pub is_dark: bool,
+    }
+    #[derive(Freezable)]
+    pub struct Custom {
+        #[assume_frozen] // real limitation, Cow's generic type must impl clone
+        // for it to be freezable
+        name: std::borrow::Cow<'static, str>,
+        palette: Palette,
+        extended: Extended,
+    }
+    impl Base for Theme {}
+    use std::sync::Arc;
+    #[derive(Freezable)]
+    pub enum Theme {
+        Light,
+        Dark,
+        Dracula,
+        Nord,
+        SolarizedLight,
+        SolarizedDark,
+        GruvboxLight,
+        GruvboxDark,
+        CatppuccinLatte,
+        CatppuccinFrappe,
+        CatppuccinMacchiato,
+        CatppuccinMocha,
+        TokyoNight,
+        TokyoNightStorm,
+        TokyoNightLight,
+        KanagawaWave,
+        KanagawaDragon,
+        KanagawaLotus,
+        Moonfly,
+        Nightfly,
+        Oxocarbon,
+        Ferra,
+        Custom(Arc<Custom>),
+    }
+    #[derive(Freezable)]
+    pub enum Level {
+        Normal,
+        AlwaysOnBottom,
+        AlwaysOnTop,
+    }
+    #[derive(Freezable)]
+    pub struct Icon {
+        rgba: Vec<u8>,
+        size: Size<u32>,
+    }
+    #[derive(Freezable)]
+    pub struct PlatformSpecific {
+        pub application_id: String,
+        pub override_redirect: bool,
+    }
+    #[derive(Freezable)]
+    pub struct Settings {
+        pub size: Size,
+        pub maximized: bool,
+        pub fullscreen: bool,
+        pub position: Position,
+        pub min_size: Option<Size>,
+        pub max_size: Option<Size>,
+        pub visible: bool,
+        pub resizable: bool,
+        pub closeable: bool,
+        pub minimizable: bool,
+        pub decorations: bool,
+        pub transparent: bool,
+        pub blur: bool,
+        pub level: Level,
+        pub icon: Option<Icon>,
+        pub platform_specific: PlatformSpecific,
+        pub exit_on_close_request: bool,
+    }
+
+    #[derive(Freezable)]
+    pub struct Instant(std::time::Instant);
+
+    #[derive(Freezable)]
+    pub enum RedrawRequest {
+        NextFrame,
+        At(Instant),
+        Wait,
+    }
+    #[derive(Freezable)]
+    pub enum Status {
+        Ignored,
+        Captured,
+    }
+    #[derive(Freezable)]
+    pub struct Action<Message: Freezable> {
+        message_to_publish: Option<Message>,
+        redraw_request: RedrawRequest,
+        event_status: Status,
+    }
+    pub trait Stream {
+        type Item;
+    }
+    pub type BoxStream<T> = core::pin::Pin<Box<dyn Stream<Item = T> + Send>>;
+    #[derive(Freezable)]
+    pub struct Task<T: Freezable> {
+        #[assume_frozen] // TODO: limitation to fix
+        stream: Option<BoxStream<Action<T>>>,
+        units: usize,
+    }
+
+    #[derive(Freezable)]
+    pub struct Preset<State: Freezable, Message: Freezable> {
+        #[assume_frozen] // real limitation, Cow's generic type must impl clone
+        // for it to be freezable
+        name: std::borrow::Cow<'static, str>,
+        #[assume_frozen] // TODO: limitation to fix
+        boot: Box<dyn Fn() -> (State, Task<Message>)>,
+    }
+
+    #[derive(Freezable)]
+    pub struct Application<P: Program + Freezable> {
+        raw: P,
+        settings: Settings,
+        window: Settings,
+        presets: Vec<Preset<P::State, P::Message>>,
+    }
+
+    #[derive(Freezable)]
+    pub struct MyState {
+        a: u64,
+    }
+    #[derive(Freezable)]
+    pub enum MyMessage {
+        A,
+    }
+
+    impl Executor for () {}
+    impl Renderer for () {}
+
+    type Main = ();
+    impl Program for Main {
+        type State = MyState;
+        type Message = MyMessage;
+        type Theme = Theme;
+        type Executor = ();
+        type Renderer = ();
+    }
+
+    assert_eq!(Application::<Main>::freeze(), 1146165835468690553)
 }

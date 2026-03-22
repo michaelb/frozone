@@ -18,8 +18,10 @@ assume_frozen!(
     usize,
     bool,
     char,
+    str,
     ()
 );
+assume_frozen!(f32, f64);
 
 impl<T: Freezable, const N: usize> Freezable for [T; N] {
     fn freeze_with_context(ctx: &mut FreezeCtx) -> u64 {

@@ -11,8 +11,7 @@ repository = "https://github.com/michaelb/frozone"
 
 [features]
 default = ["std"]
-std = ["alloc"]
-alloc = []
+std = []
 
 [dependencies]
 frozone-derive = { path = "../frozone-derive", version = "0.3.0", default-features=false }

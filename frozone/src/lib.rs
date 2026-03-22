@@ -38,6 +38,11 @@ pub mod internals {
 
     pub const TYPE_RECURSION_MESSAGE: &str = "exceeded the 1024 nested types limit";
 
+    #[cfg(not(feature = "std"))]
+    extern crate alloc;
+    #[cfg(not(feature = "std"))]
+    use alloc::boxed::Box;
+
     /// "Name and Freeze"-returning function
     pub type NF = Box<dyn Fn(&mut FreezeCtx) -> (&str, u64)>;
     /// "(only) Freeze"-returning function
