@@ -158,8 +158,8 @@ struct Cycle3_3 {
 ```
 
 While in a serialized form it would be hard to distinguish `Cycle2_1` from `Cycle3_1`,
-frozone understands that those are not equivalent semantically, and therefore they will
-have different `freeze()` values
+frozone understands that those are actually not equivalent semantically,
+and therefore they will have different `freeze()` values
 
 
 </details>
