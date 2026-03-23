@@ -41,7 +41,7 @@ pub mod internals {
     #[cfg(not(feature = "std"))]
     extern crate alloc;
     #[cfg(not(feature = "std"))]
-    use alloc::boxed::Box;
+    pub use alloc::boxed::Box;
 
     /// "Name and Freeze"-returning function
     pub type NF = Box<dyn Fn(&mut FreezeCtx) -> (&str, u64)>;

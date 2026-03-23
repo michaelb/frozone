@@ -193,7 +193,6 @@ fn derive_freezable_struct(
                 }
                 ctx.depth += 1;
                 ctx.cache.push((t_id, ctx.depth)).expect(TYPE_RECURSION_MESSAGE);
-                println!("ctx = {ctx:?}");
 
                 let freeze = [#(#fields,)*].iter().fold(0u64, |acc: u64, x: &NF|
                     nf_freeze(x, ctx, acc)
