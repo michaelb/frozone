@@ -850,3 +850,33 @@ fn complex() {
 
     assert_eq!(Application::<Main>::freeze(), 1146165835468690553)
 }
+#[test]
+fn display() {
+    #[derive(Freezable)]
+    struct MyType {
+        field: u64,
+        sub: MySubType,
+        e: MySubType2,
+    }
+    #[derive(Freezable)]
+    struct MySubType {
+        field2: u64,
+    }
+    #[derive(Freezable)]
+    struct MySubType3 {
+        field3: u64,
+        subsub: MySubType4,
+    }
+    #[derive(Freezable)]
+    struct MySubType4 {
+        field4: u64,
+    }
+    #[derive(Freezable)]
+    enum MySubType2 {
+        Variant,
+        AnotherVariant(u64, u32),
+        YetAnotherVariant(Option<Option<u8>>, u64),
+        YouGetIt(Box<MyType>, MySubType3),
+    }
+    MyType::display();
+}

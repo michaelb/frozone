@@ -99,8 +99,14 @@ fn derive_freezable_enum(
                         let mut hasher = core::hash::SipHasher::new();
 
                         #discriminant.hash(&mut hasher);
-                        [#(#variant_fields,)*].iter().for_each(|x: &F| {
-                            x(ctx).hash(&mut hasher);
+                        [#(#variant_fields,)*].iter().enumerate().for_each(|(i,x): (usize,&F)| {
+                            {
+                                let a = x(ctx);
+                                if ctx.display {
+                                    println!("{:\t<4$}({}.{}): {}", "", stringify!(#name), i ,a ,ctx.depth as usize);
+                                }
+                                a.hash(&mut hasher);
+                            }
                         });
                         hasher.finish()
                     })
@@ -126,7 +132,9 @@ fn derive_freezable_enum(
                 }
                 ctx.depth += 1;
                 ctx.cache.push((t_id, ctx.depth)).expect(TYPE_RECURSION_MESSAGE);
-
+                if ctx.display {
+                    println!("{:\t<2$}({})", "", stringify!(#name),ctx.depth as usize - 1);
+                }
                 let freeze = [#(#variants_names_and_freezes,)*].iter().fold(0u64, |acc, x: &NF|
                     nf_freeze(x, ctx, acc)
                 );
@@ -194,9 +202,13 @@ fn derive_freezable_struct(
                 ctx.depth += 1;
                 ctx.cache.push((t_id, ctx.depth)).expect(TYPE_RECURSION_MESSAGE);
 
+                if ctx.display {
+                    println!("{:\t<2$}({})", "", stringify!(#name),ctx.depth as usize - 1);
+                }
                 let freeze = [#(#fields,)*].iter().fold(0u64, |acc: u64, x: &NF|
                     nf_freeze(x, ctx, acc)
                 );
+
                 ctx.cache.pop();
                 ctx.depth -= 1;
                 freeze
