@@ -6,26 +6,26 @@ use heapless::Vec;
 
 pub const TYPE_RECURSION_LIMIT: usize = 1024;
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct FreezeCtx {
     // type, depth where type was found at
     pub cache: Vec<(core::any::TypeId, u32), TYPE_RECURSION_LIMIT>,
     pub depth: u32,
-}
-
-impl FreezeCtx {
-    fn new() -> Self {
-        FreezeCtx {
-            cache: Vec::new(),
-            depth: 0,
-        }
-    }
+    pub display: bool,
 }
 
 pub trait Freezable {
     fn freeze() -> u64 {
-        let mut ctx = FreezeCtx::new();
+        let mut ctx = FreezeCtx::default();
         Self::freeze_with_context(&mut ctx)
+    }
+    fn display() {
+        let mut ctx = FreezeCtx {
+            cache: Vec::new(),
+            depth: 0,
+            display: true,
+        };
+        Self::freeze_with_context(&mut ctx);
     }
     fn freeze_with_context(ctx: &mut FreezeCtx) -> u64;
 }
@@ -57,7 +57,7 @@ pub mod internals {
         acc.overflowing_add(hasher.finish()).0
     }
 
-    pub fn f_freeze(x: &NF, ctx: &mut FreezeCtx, acc: u64) -> u64 {
+    pub fn f_freeze(x: &F, ctx: &mut FreezeCtx, acc: u64) -> u64 {
         #[allow(deprecated)]
         let mut hasher = core::hash::SipHasher::new();
         x(ctx).hash(&mut hasher);
