@@ -92,6 +92,15 @@ fn derive_freezable_enum(
                 }}
             });
 
+            #[cfg(not(feature = "std"))]
+            let display_variant = quote! {};
+            #[cfg(feature = "std")]
+            let display_variant = quote! {{
+                if ctx.display {
+                    println!("{:\t<4$}({}.{}): {:#018x}", "", stringify!(#name),i ,a ,ctx.depth as usize);
+                }
+            }};
+
             // combine all into the enum's final freeze
             quote! { {
                 let x: NF = Box::new(|ctx|
@@ -102,9 +111,7 @@ fn derive_freezable_enum(
                         [#(#variant_fields,)*].iter().enumerate().for_each(|(i,x): (usize,&F)| {
                             {
                                 let a = x(ctx);
-                                if ctx.display {
-                                    println!("{:\t<4$}({}.{}): {:#018x}", "", stringify!(#name),i ,a ,ctx.depth as usize);
-                                }
+                                #display_variant
                                 a.hash(&mut hasher);
                             }
                         });
@@ -115,6 +122,15 @@ fn derive_freezable_enum(
             }}
         }
     });
+
+    #[cfg(not(feature = "std"))]
+    let display_enum = quote! {};
+    #[cfg(feature = "std")]
+    let display_enum = quote! {{
+        if ctx.display {
+            println!("{:\t<2$}({})", "", stringify!(#name),ctx.depth as usize - 1);
+        }
+    }};
 
     let (impl_generics, type_generics, where_clause) = generics.split_for_impl();
     let unit_generics = generics_to_unit(generics);
@@ -132,9 +148,7 @@ fn derive_freezable_enum(
                 }
                 ctx.depth += 1;
                 ctx.cache.push((t_id, ctx.depth));
-                if ctx.display {
-                    println!("{:\t<2$}({})", "", stringify!(#name),ctx.depth as usize - 1);
-                }
+                #display_enum
                 let freeze = [#(#variants_names_and_freezes,)*].iter().fold(0u64, |acc, x: &NF|
                     nf_freeze(x, ctx, acc)
                 );
@@ -183,6 +197,15 @@ fn derive_freezable_struct(
         }
     });
 
+    #[cfg(not(feature = "std"))]
+    let display_struct = quote! {};
+    #[cfg(feature = "std")]
+    let display_struct = quote! {{
+        if ctx.display {
+            println!("{:\t<2$}({})", "", stringify!(#name),ctx.depth as usize - 1);
+        }
+    }};
+
     let (impl_generics, type_generics, where_clause) = generics.split_for_impl();
     let unit_generics = generics_to_unit(generics);
     let generated = quote! {
@@ -202,9 +225,7 @@ fn derive_freezable_struct(
                 ctx.depth += 1;
                 ctx.cache.push((t_id, ctx.depth));
 
-                if ctx.display {
-                    println!("{:\t<2$}({})", "", stringify!(#name),ctx.depth as usize - 1);
-                }
+                #display_struct
                 let freeze = [#(#fields,)*].iter().fold(0u64, |acc: u64, x: &NF|
                     nf_freeze(x, ctx, acc)
                 );

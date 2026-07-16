@@ -69,11 +69,13 @@ pub mod internals {
     pub type F = Box<dyn Fn(&mut FreezeCtx) -> u64>;
 
     pub fn nf_freeze(x: &NF, ctx: &mut FreezeCtx, acc: u64) -> u64 {
+        #[allow(unused_variables)]
         let (display, depth) = (ctx.display, ctx.depth as usize);
         #[allow(deprecated)]
         let mut hasher = core::hash::SipHasher::new();
         let y = x(ctx);
 
+        #[cfg(feature = "std")]
         if display {
             println!("{:\t<3$} - {} : {:#018x}", "", y.0, y.1, depth - 1);
         }
@@ -83,11 +85,13 @@ pub mod internals {
     }
 
     pub fn f_freeze(x: &F, ctx: &mut FreezeCtx, acc: u64) -> u64 {
+        #[allow(unused_variables)]
         let (display, depth) = (ctx.display, ctx.depth as usize);
         #[allow(deprecated)]
         let mut hasher = core::hash::SipHasher::new();
         let y = x(ctx);
 
+        #[cfg(feature = "std")]
         if display {
             println!("{:\t<2$} : {:#x}", "", y, depth);
         }
