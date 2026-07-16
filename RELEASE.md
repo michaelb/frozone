@@ -1,5 +1,6 @@
 # Release procedure
 
+- update changelog
 - bump cargo.toml to next version and update cargo.lock for:
   - frozone-derive
   - frozone
