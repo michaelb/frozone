@@ -852,6 +852,7 @@ fn complex() {
 }
 
 #[test]
+#[cfg(feature = "std")]
 fn display() {
     #[derive(Freezable)]
     struct MyType {

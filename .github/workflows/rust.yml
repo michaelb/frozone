@@ -19,6 +19,8 @@ jobs:
     - uses: dtolnay/rust-toolchain@1.85
     - name: Build
       run: cargo build --verbose
+    - name: Run clippy and check
+      run: cargo check && cargo clippy
     - name: Run tests
       run: cargo test --verbose
     - name: Run tests (no_std, alloc)

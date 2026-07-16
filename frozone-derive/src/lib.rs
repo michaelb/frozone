@@ -36,7 +36,7 @@ fn derive_freezable_enum(
     let variants_names_and_freezes = data.variants.iter().map(|f| {
         let name = &f.ident;
         if let Some(af) = f.attrs.iter().find(|a| a.path().is_ident("assume_frozen")) {
-            if attr_helper_freeze_generics(&af) {
+            if attr_helper_freeze_generics(af) {
                 // the variant's field types still freezes their generic arguments
                 // (but not themselves)
                 let variant_fields = f
@@ -160,7 +160,7 @@ fn derive_freezable_struct(
         let name = &f.ident.as_ref().unwrap_or(&empty_ident);
         let ty = &f.ty;
         if let Some(af) = f.attrs.iter().find(|a| a.path().is_ident("assume_frozen")) {
-            if attr_helper_freeze_generics(&af) {
+            if attr_helper_freeze_generics(af) {
                 // field type still freezes the generic arguments of its type
                 // (but not the type itself)
                 freeze_field_only_generics(ty, name)
@@ -335,7 +335,7 @@ fn attr_helper_freeze_generics(attr: &syn::Attribute) -> bool {
         Ok(())
     }); // may be err if there is no parenthesis inside the #[assume_frozen] attr
     // println!("found generic {found_freeze_generic:?}");
-    return found_freeze_generic;
+    found_freeze_generic
 }
 
 fn generics_to_unit(generics: &syn::Generics) -> proc_macro2::TokenStream {
