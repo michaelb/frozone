@@ -20,7 +20,7 @@ jobs:
     - name: Build
       run: cargo build --verbose
     - name: Run clippy and check
-      run: cargo check && cargo clippy
+      run: cargo check && rustup component add clippy && cargo clippy
     - name: Run tests
       run: cargo test --verbose
     - name: Run tests (no_std, alloc)
