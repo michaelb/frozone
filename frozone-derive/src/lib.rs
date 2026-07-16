@@ -103,7 +103,7 @@ fn derive_freezable_enum(
                             {
                                 let a = x(ctx);
                                 if ctx.display {
-                                    println!("{:\t<4$}({}.{}): {}", "", stringify!(#name), i ,a ,ctx.depth as usize);
+                                    println!("{:\t<4$}({}.{}): {:#018x}", "", stringify!(#name),i ,a ,ctx.depth as usize);
                                 }
                                 a.hash(&mut hasher);
                             }

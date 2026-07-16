@@ -73,7 +73,7 @@ pub mod internals {
         let y = x(ctx);
 
         if display {
-            println!("{:\t<3$} - {} : {}", "", y.0, y.1, depth as usize - 1);
+            println!("{:\t<3$} - {} : {:#018x}", "", y.0, y.1, depth as usize - 1);
         }
         y.0.hash(&mut hasher);
         y.1.hash(&mut hasher);
@@ -87,7 +87,7 @@ pub mod internals {
         let y = x(ctx);
 
         if display {
-            println!("{:\t<2$} : {}", "", y, depth as usize);
+            println!("{:\t<2$} : {:#x}", "", y, depth as usize);
         }
         y.hash(&mut hasher);
         acc.overflowing_add(hasher.finish()).0

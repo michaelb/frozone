@@ -850,6 +850,7 @@ fn complex() {
 
     assert_eq!(Application::<Main>::freeze(), 1146165835468690553)
 }
+
 #[test]
 fn display() {
     #[derive(Freezable)]
@@ -864,7 +865,7 @@ fn display() {
     }
     #[derive(Freezable)]
     struct MySubType3 {
-        field3: u64,
+        field3: (),
         subsub: MySubType4,
     }
     #[derive(Freezable)]
@@ -872,11 +873,15 @@ fn display() {
         field4: u64,
     }
     #[derive(Freezable)]
+    struct MySubType5 {
+        field4: Box<MyType>, // add a recursive type here while we're at it
+    }
+    #[derive(Freezable)]
     enum MySubType2 {
         Variant,
         AnotherVariant(u64, u32),
         YetAnotherVariant(Option<Option<u8>>, u64),
-        YouGetIt(Box<MyType>, MySubType3),
+        YouGetIt(MySubType5, MySubType3),
     }
     MyType::display();
 }
