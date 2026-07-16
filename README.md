@@ -4,6 +4,8 @@
 recursively to ensure they never get changed, helping enforcing
 backwards-compatibility or API stability (arewesemveryet.org ?)
 
+No dependencies appart from the proc-macro `syn` and `quote` at compile-time
+
 ## Use case
 
 Let's say there is a very important data structure for your application:

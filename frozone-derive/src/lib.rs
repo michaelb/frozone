@@ -131,7 +131,7 @@ fn derive_freezable_enum(
                     return *first_depth as u64 + 1;
                 }
                 ctx.depth += 1;
-                ctx.cache.push((t_id, ctx.depth)).expect(TYPE_RECURSION_MESSAGE);
+                ctx.cache.push((t_id, ctx.depth));
                 if ctx.display {
                     println!("{:\t<2$}({})", "", stringify!(#name),ctx.depth as usize - 1);
                 }
@@ -200,7 +200,7 @@ fn derive_freezable_struct(
                     return *first_depth as u64 + 1;
                 }
                 ctx.depth += 1;
-                ctx.cache.push((t_id, ctx.depth)).expect(TYPE_RECURSION_MESSAGE);
+                ctx.cache.push((t_id, ctx.depth));
 
                 if ctx.display {
                     println!("{:\t<2$}({})", "", stringify!(#name),ctx.depth as usize - 1);

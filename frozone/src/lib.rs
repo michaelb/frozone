@@ -5,6 +5,8 @@ pub use frozone_derive::Freezable;
 
 #[cfg(not(feature = "std"))]
 extern crate alloc;
+#[cfg(not(feature = "std"))]
+use alloc::vec::Vec;
 
 pub const TYPE_RECURSION_LIMIT: usize = 1024;
 
@@ -28,7 +30,7 @@ pub trait Freezable {
     #[cfg(feature = "std")]
     fn display() {
         let mut ctx = FreezeCtx {
-            cache: heapless::Vec::new(),
+            cache: Vec::new(),
             depth: 0,
             display: true,
         };
@@ -43,7 +45,7 @@ pub trait Freezable {
 #[derive(Debug, Default)]
 pub struct FreezeCtx {
     // type, depth where type was found at
-    pub cache: heapless::Vec<(core::any::TypeId, u32), TYPE_RECURSION_LIMIT>,
+    pub cache: Vec<(core::any::TypeId, u32)>,
     pub depth: u32,
     pub display: bool,
 }

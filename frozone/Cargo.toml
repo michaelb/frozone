@@ -14,7 +14,6 @@ default = ["std"]
 std = []
 
 [dependencies]
-frozone-derive = { path = "../frozone-derive", version = "0.4.1", default-features=false }
-heapless = "0.8.0"
+frozone-derive = { path = "../frozone-derive", version = "0.4.1" }
 [dev-dependencies]
 static_assertions = "1.1.0"
