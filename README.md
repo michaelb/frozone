@@ -1,3 +1,5 @@
+[![CI](https://github.com/michaelb/frozone/actions/workflows/rust.yml/badge.svg)](https://github.com/michaelb/frozone/actions/workflows/rust.yml)
+
 # frozone
 
 `frozone` is a crate that allows you to 'freeze' structs and enums
